@@ -56,7 +56,10 @@ SuperSimpleTimeLine {
 			}, {playing = false});
 		}, {"queue changed".warn;});
 	}
-			
+
+	itemAtTime {|time|
+		^items.detect({|item| item.time == time});
+	}
 	
 	removeItem {|item| 
 		items.remove(item);
