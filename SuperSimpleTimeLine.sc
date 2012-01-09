@@ -70,11 +70,11 @@ SuperSimpleTimeLine {
 	}
 	
 	shiftItemsLater {|firstItem, time| 
-		var shiftAmount, ind;
+		var shiftAmount, ind, item;
 		time = max(time, 0);
 		shiftAmount = time - firstItem.time;
 		ind = items.indexOf(firstItem);
-		for(ind, items.size-1, {item.time = item.time + shiftAmount });
+		for(ind, items.size-1, {|i| item = [i]; item.time = item.time + shiftAmount });
 		items.sort;
 		if(playing, {this.play(clock.beats - clockStart)}); // this will rebuild the queue
 	}
