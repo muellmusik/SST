@@ -9,7 +9,7 @@
 
 // might be simpler to just make it uneditable while playing
 
-SuperSimpleTimeLine {
+SuperSimpleTimeline {
 	var <clock, items, queue, clockStart, nextTime, playOffset;
 	var playing = false;
 
