@@ -113,4 +113,32 @@ SSTItemWrapper {
 	value { wrapped.value }
 	
 }
+
+// text to be evaluated
+SSTTextWrapper {
+	var <>time;
+	var <text;
+	var <>wrapped; // the thing that's executed
+	var <resources; // a collection of buffers, etc.
+	
+	// text must be properly escaped if you supply a String literal
+	*new {|time, text| ^super.newCopyArgs(time, text).compileText; }
+	
+	compileText { wrapped = text.compile }
+	
+	text_ {|newText| text = newText; this.compileText; }
+	
+	// a (probably) editable view which can pop up on the timeline
+	gui { }
+	
+	// initialisation code for things like buffers and defs
+	resourceCode { }
+	
+	// the code which causes the actual event
+	eventCode { ^text }
+	
+	//execute the event
+	value { wrapped.value }
+	
+}
 	
