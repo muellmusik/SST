@@ -10,7 +10,7 @@
 // might be simpler to just make it uneditable while playing
 
 SuperSimpleTimeline {
-	var <clock, items, queue, clockStart, nextTime, playOffset;
+	var <clock, <items, queue, clockStart, nextTime, playOffset;
 	var playing = false;
 
 	*new {|clock| ^super.new.init(clock); }
