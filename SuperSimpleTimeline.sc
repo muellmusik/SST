@@ -98,11 +98,13 @@ SuperSimpleTimeline {
 
 // could contain text, a soundfile, whatever
 SSTItemWrapper {
-	var <>time;
+	var <time;
 	var <>wrapped; // the thing that's executed
 	var <resources; // a collection of buffers, etc.
 	
-	*new {|time, wrapped| ^super.newCopyArgs(time, wrapped); }
+	*new {|time, wrapped| ^super.newCopyArgs(max(time, 0), wrapped); }
+	
+	time_ {|newTime| time = max(newTime, 0); }
 	
 	// a (probably) editable view which can pop up on the timeline
 	gui { }
