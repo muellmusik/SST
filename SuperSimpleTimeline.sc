@@ -251,6 +251,7 @@ SSTGUI {
 		scrollView.hasBorder = true;
 		scrollView.resize = 2;
 		scrollView.background = Color.clear;
+		scrollView.hasVerticalScroller = false;
 		
 //		sfView = SCSoundFileView.new(scrollView, Rect(0,20, width - 10, 300));
 //		sfView.background = HiliteGradient(Color.blue, Color.cyan, steps: 256);
@@ -285,9 +286,9 @@ SSTGUI {
 			var width;
 			//width = scrollView.bounds.width - 2 + (sf.duration * 160 * ([0.001, 1.001, \exp].asSpec.map(view.value) - 0.001));
 			// temp fix for userview with large width bug
-			width = scrollView.bounds.width - 2 + ((32768 - scrollView.bounds.width) * ([0.001, 1.001, \exp].asSpec.map(view.value) - 0.001));
+			width = scrollView.bounds.width - 2 + ((32768 - scrollView.bounds.width) * ([0.0, 1.0, \cos].asSpec.map(view.value)));
 			width = width.round;
-			//eventsView.bounds = Rect(0,0, width, 300);
+			eventsView.bounds = Rect(0,0, width, 300);
 			backView.bounds = Rect(0, 20, width, 300); 
 			timesView.bounds = Rect(0, 0, width, 20);
 			scrollView.refresh;
@@ -447,23 +448,30 @@ SSTGUI {
 	makeEventsView {
 		eventsView.notNil.if({eventsView.remove});
 		
+		scrollView.action = { eventsView.refresh }; // for now. Could but labels in a separate lower view
 		
 		eventsView = UserView(backView, Rect(0, 0, backView.bounds.width, backView.bounds.height))
 			.canFocus_(false)
 			.background_(Color.clear);
 			
 		eventsView.drawFunc = {
+			var stringX = scrollView.visibleOrigin.x + 4;
 			itemRects = Array.new(sst.items.size);
 			Pen.strokeColor = Color.black;
-			Pen.fillColor = Color.grey;
-			sst.items.reverseDo({|item| // draw earlier items on top
-				var x, rect;
-				x = durInv * item.time * eventsView.bounds.width;
-				rect = Rect.aboutPoint(x@15, 10, 10);
-				Pen.width = 1;
-				Pen.fillOval(rect);
-				Pen.strokeOval(rect);
-				itemRects = itemRects.add(rect->item);
+			//Pen.fillColor = Color.grey;
+			sst.groupOrder.do({|name, i|
+				
+				Pen.stringAtPoint(name.asString, stringX@(i * 40 + 4), Font( Font.defaultSansFace, 10 ), Color.grey(0.3));
+				Pen.fillColor = Color.rand;
+				sst.groups[name].items.reverseDo({|item| // draw earlier items on top
+					var x, rect;
+					x = durInv * item.time * eventsView.bounds.width;
+					rect = Rect.aboutPoint(x@((i * 40) + 30), 10, 10);
+					Pen.width = 1;
+					Pen.fillOval(rect);
+					Pen.strokeOval(rect);
+					itemRects = itemRects.add(rect->item);
+				});
 			});
 		};
 	//
