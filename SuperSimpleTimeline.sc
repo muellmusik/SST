@@ -11,21 +11,28 @@
 
 SuperSimpleTimeline {
 	var <clock, <items, queue, clockStart, nextTime, playOffset;
+	var <groups, <groupOrder;
 	var playing = false;
 
 	*new {|clock| ^super.new.init(clock); }
 	
 	init {|argclock| 
 		clock = argclock ? TempoClock.default; 
-		items = SortedList(128, {|a, b| a.time < b.time });
+		items = SortedList(128, {|a, b| 
+			a.time < b.time || (a.time == b.time && { a.group.order < b.group.order }) 
+		});
+		groupOrder = List.new;
+		groups = IdentityDictionary.new;
+		this.createGroup('Ungrouped', []);
 	}
 	
 	addItem {|item| 
-		items.add(item);	
+		items.add(item);
+		groups['Ungrouped'].addItem(item);
 	}
 	
 	// we schedule one event at a time, that way we can ignore a scheduled event if its time has changed
-	// calling this while already playing will rebuild the cue and jump to the new time
+	// calling this while already playing will rebuild the queue and jump to the new time
 	play {|startTime = 0| // startTime is relative to the event list
 		var i = items.lastIndex, item, time, thisQueue;
 		if(items.size > 0, {
@@ -63,6 +70,7 @@ SuperSimpleTimeline {
 	
 	removeItem {|item| 
 		items.remove(item);
+		groups.do({|items| items.remove(item) });
 		if(playing, {this.play(clock.beats - clockStart)}); // this will rebuild the queue
 	}
 	
@@ -86,7 +94,34 @@ SuperSimpleTimeline {
 	
 	clear {}
 	
-	createGroup {|groupName, names| } // names is optional initial setup
+	createGroup {|groupName, groupItems| // Symbol, Array;
+		var exists;
+		exists = groups[groupName];
+		if(exists.notNil, { 
+			exists.items.do({|item| groups['Ungrouped'].addItem(item) });
+			exists.items = groupItems;
+		}, {
+			groupOrder.add(groupName); // if new add last
+		 	groups[groupName] = SSTGroup(groupName, groupItems, groupOrder.indexOf(groupName));
+		 }); 
+	} // very simple for now
+	
+	orderGroup {|groupName, index|
+		groupOrder.remove(groupName);
+		groupOrder.clipPut(index, groupName);
+		this.resetGroupOrders;
+	}
+	
+	resetGroupOrders {
+		groupOrder.do({|key, i| groups[key].order = i; });
+	}
+	
+	removeGroup {|groupName|
+		groups[groupName].items.do({|item| groups['Ungrouped'].addItem(item) });
+		groups[groupName] = nil;
+		groupOrder.remove(groupName);
+		this.resetGroupOrders;
+	}
 	
 	addSection {|sectionName, time| } // is this also a kind of event? Probably yes!
 	
@@ -96,15 +131,41 @@ SuperSimpleTimeline {
 	
 }
 
+SSTGroup {
+	var <name, <items, <>order;
+	
+	*new {|name, items, order| 
+		items = SortedList(items.size, {|a, b| a.time <= b.time}).addAll(items);
+		^super.newCopyArgs(name, items, order).init;
+	}
+	
+	init { items.do(_.group = this) }
+	
+	items_ {|newItems|
+		items = SortedList(newItems.size, {|a, b| a.time <= b.time}).addAll(newItems);
+		this.init
+	}
+	
+	addItem {|newItem| newItem.group = this; items.add(newItem) }
+	
+	removeItem {|itemToRemove| items.remove(itemToRemove) }
+	
+	sort { items.sort }
+	
+}
+
 // could contain text, a soundfile, whatever
 SSTItemWrapper {
 	var <time;
 	var <>wrapped; // the thing that's executed
+	var <group;
 	var <resources; // a collection of buffers, etc.
 	
 	*new {|time, wrapped| ^super.newCopyArgs(max(time, 0), wrapped); }
 	
-	time_ {|newTime| time = max(newTime, 0); }
+	time_ {|newTime| time = max(newTime, 0); group.sort;}
+	
+	group_ {|newGroup| group !? {|oldGroup| oldGroup.removeItem(this)}; group = newGroup }
 	
 	// a (probably) editable view which can pop up on the timeline
 	gui { }
