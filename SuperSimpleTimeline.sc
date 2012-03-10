@@ -461,7 +461,7 @@ SSTGUI {
 			//Pen.fillColor = Color.grey;
 			sst.groupOrder.do({|name, i|
 				
-				Pen.stringAtPoint(name.asString, stringX@(i * 40 + 4), Font( Font.defaultSansFace, 10 ), Color.grey(0.3));
+				Pen.stringAtPoint(name.asString, stringX@(i * 40 + 4), Font( Font.defaultSansFace, 10 ).boldVariant, Color.grey(0.3));
 				Pen.fillColor = Color.rand;
 				sst.groups[name].items.reverseDo({|item| // draw earlier items on top
 					var x, rect;
