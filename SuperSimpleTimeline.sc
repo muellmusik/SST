@@ -78,6 +78,7 @@ SuperSimpleTimeline {
 		item.time = time;
 		items.sort;
 		if(playing, {this.play(clock.beats - clockStart)}); // this will rebuild the queue
+		this.changed(\times);
 	}
 	
 	shiftItemsLater {|time, firstItem| 
@@ -88,6 +89,7 @@ SuperSimpleTimeline {
 		for(ind, items.size-1, {|i| item = items[i]; item.time = item.time + shiftAmount });
 		items.sort;
 		if(playing, {this.play(clock.beats - clockStart)}); // this will rebuild the queue
+		this.changed(\times);
 	}
 	
 	//shiftItemsBefore {|lastItem, time| } // don't think we need this
@@ -479,7 +481,11 @@ SSTGUI {
 			var time;
 			if(selectedItem.notNil, {
 				time = (x - selectXOffset) / (durInv * eventsView.bounds.width);
-				sst.moveItem(time, selectedItem);
+				if(modifiers.isShift, {
+					sst.shiftItemsLater(time, selectedItem);
+				}, {
+					sst.moveItem(time, selectedItem);
+				});
 				eventsView.refresh;
 			});
 		};
@@ -624,6 +630,19 @@ SSTGUI {
 	
 	update { arg changed, what ...args;
 		//var cursorLoc;
+		
+		switch(what,
+			\times, {
+				var lastX;
+				lastX = sst.lastEventTime * durInv * eventsView.bounds.width;
+				if(lastX >= (eventsView.bounds.width - 10), {
+					eventsView.bounds = eventsView.bounds.width_(lastX + 100);
+					backView.bounds = backView.bounds.width_(lastX + 100); 
+					timesView.bounds = timesView.bounds.width_(lastX + 100);
+				});
+			}
+		)
+				
 //		switch(what,
 //			
 //			\time, {
