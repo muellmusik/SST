@@ -635,7 +635,7 @@ SSTGUI {
 			\times, {
 				var lastX;
 				lastX = sst.lastEventTime * durInv * eventsView.bounds.width;
-				if(lastX >= (eventsView.bounds.width - 10), {
+				if(lastX > (eventsView.bounds.width), {
 					eventsView.bounds = eventsView.bounds.width_(lastX + 100);
 					backView.bounds = backView.bounds.width_(lastX + 100); 
 					timesView.bounds = timesView.bounds.width_(lastX + 100);
