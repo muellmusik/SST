@@ -215,11 +215,7 @@ SSTGUI {
 	var sst, eventsView, window, name, onClose;
 	var path, sf, durInv, sfView, scrollView, selectView, backView, timesView;
 	var selectedItem, selectXOffset, itemRects;
-	var sequenceLevels;
 	var dependees;
-	var seqs, snapshots, names, times, connections;
-	var addSS, remSS;
-	var showOnlySelected = false;
 	var time, curSSTime, refTime;
 	var zoomSlider;
 	
@@ -546,87 +542,7 @@ SSTGUI {
 //		});
 	}
 
-	
-//	setFillColors {
-//		var color;
-//		snapshots.do({|ss, i|
-//			color =  if(ss === activeSnapshot, {Color.grey.alpha_(0.9)}, {
-//				if(seqs[i] === activeSequence, {Color.blue.alpha_(0.9)}, {Color.black.alpha_(0.6)})
-//			});
-//			eventsView.setFillColor(i, color);
-//		});
-//	}
-//	
-//	resetPoints {
-//		seqs = List.new;
-//		snapshots = List.new;
-//		names = List.new;
-//		times = Array.new;
-//		showOnlySelected.not.if({
-//			ca.sequences.do({|seq|
-//				seq.snapshots.do({|ss|
-//					var sstime;
-//					sstime = ss.time;
-//					times = times.add(sstime / sf.duration);
-//					names.add(ss.name.asString + sstime.asTimeString(0.01));
-//					seqs.add(seq); // for ordered lookup
-//					snapshots.add(ss);
-//				});
-//			});
-//		}, {
-//		
-//			activeSequence.snapshots.do({|ss|
-//				var time;
-//				time = ss.time;
-//				times = times.add(time / sf.duration);
-//				names.add(ss.name.asString + ss.time.asTimeString(0.01));
-//				seqs.add(activeSequence); // for ordered lookup
-//				snapshots.add(ss);
-//			});
-//		});
-//		
-//		// values
-//		eventsView.value_([times, seqs.collect({|seq| sequenceLevels[seq] })]); 
-//		
-//		this.drawConnections;
-//		
-//		snapshots.do({arg ss, i;
-//			eventsView.setString(i, ss.isKnown.if({""}, {"?"}));
-//		});
-//	}
-//	
-//	drawConnections {
-//
-//		seqs.doAdjacentPairs({|a,b, i| if(a === b, {
-//			eventsView.connect(i, [i +1])
-//		}, {eventsView.connect(i, [])})});
-//	}
-//	
-//	// we use SCSoundFileView Selections for the snapshot time cursors
-//	drawSelections {
-//	
-//		var seltime;
-//		
-//		if(sfView.numFrames.notNil, {this.clearSelections;});
-//		snapshots.do({|ss, index|
-//			if(seqs[index] === activeSequence, {
-//				seltime = eventsView.value[0][index];
-//				sfView.setEditableSelectionStart(index, true);
-//				sfView.setEditableSelectionSize(index, true);
-//				sfView.setSelection(index, [sf.numFrames * seltime, 
-//					sf.numFrames / sfView.bounds.width * 2]); 
-//				sfView.setSelectionColor(index, Color.white);
-//				sfView.setEditableSelectionStart(index, false);
-//				sfView.setEditableSelectionSize(index, false);
-//			});
-//		});
-//		sfView.refresh;
-//	
-//	}
-//	
-//	clearSelections {
-//		64.do({|i| sfView.selectNone(i)});
-//	}
+
 	
 	update { arg changed, what ...args;
 		//var cursorLoc;
