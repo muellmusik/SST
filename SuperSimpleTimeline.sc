@@ -487,6 +487,7 @@ SSTGUI {
 				postf("newX: % newTime: %\n", newX, time);
 				
 				// now check if we need to extend and recalc durInv
+				// if we comment this out we get a zooming behaviour with no jumps
 				if(max(lastX, newX) > (eventsView.bounds.width), {
 					eventsView.bounds = eventsView.bounds.width_(lastX + 300);
 					backView.bounds = backView.bounds.width_(lastX + 300); 
@@ -508,6 +509,7 @@ SSTGUI {
 				
 				// recalc durInv as bounds may have changed
 				durInv = sst.lastEventTime.reciprocal;
+				timesView.refresh;
 				eventsView.refresh;
 			});
 		};
