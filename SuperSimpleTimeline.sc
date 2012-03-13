@@ -479,13 +479,29 @@ SSTGUI {
 			Pen.strokeColor = Color.black;
 			//Pen.fillColor = Color.grey;
 			sst.groupOrder.do({|name, i|
+				var groupY;
+				
+				groupY = ((i * 40) + 30);
 				
 				Pen.stringAtPoint(name.asString, stringX@(i * 40 + 4), Font( Font.defaultSansFace, 10 ).boldVariant, Color.grey(0.3));
+				
+				if(name != 'Ungrouped', {
+					sst.groups[name].items.doAdjacentPairs({|a, b|
+						var x1, x2;
+						x1 = durInv * a.time * eventsView.bounds.width;
+						x2 = durInv * b.time * eventsView.bounds.width;
+						Pen.width = 0.5;
+						Pen.line(x1@groupY, x2@groupY);
+						Pen.stroke;
+					});
+				});
+				
+				
 				Pen.fillColor = Color.rand;
 				sst.groups[name].items.reverseDo({|item| // draw earlier items on top
 					var x, rect;
 					x = durInv * item.time * eventsView.bounds.width;
-					rect = Rect.aboutPoint(x@((i * 40) + 30), 10, 10);
+					rect = Rect.aboutPoint(x@groupY, 10, 10);
 					Pen.width = 1;
 					Pen.fillOval(rect);
 					Pen.strokeOval(rect);
