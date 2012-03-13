@@ -214,10 +214,11 @@ SSTTextWrapper {
 SSTGUI {
 	var sst, eventsView, window, name, onClose;
 	var path, sf, durInv, sfView, scrollView, selectView, backView, timesView;
-	var selectedItem, selectXOffset, itemRects;
+	var selectedItem, selectedStartX, selectXOffset, selectedTimePerPixel, itemRects, visOriginOnSelected;
 	var dependees;
 	var time, curSSTime, refTime;
 	var zoomSlider;
+	var inMove = false;
 	
 	*new {|sst, name, origin|
 		^super.new.init(sst, name ? "SuperSimpleTimeline").makeWindow(origin ? (200@200));
@@ -280,17 +281,17 @@ SSTGUI {
 		
 		window.view.decorator.shift(0, 5);
 		StaticText(window, Rect(0, 0, 5, 10)).string_("-").font_(Font("Helvetica-Bold", 12));
-		zoomSlider = SmoothSlider(window, Rect(0, 5, 100, 10)).action_({|view| 
-			var width;
-			//width = scrollView.bounds.width - 2 + (sf.duration * 160 * ([0.001, 1.001, \exp].asSpec.map(view.value) - 0.001));
-			// temp fix for userview with large width bug
-			width = scrollView.bounds.width - 2 + ((32768 - scrollView.bounds.width) * ([0.0, 1.0, \cos].asSpec.map(view.value)));
-			width = width.round;
-			eventsView.bounds = Rect(0,0, width, 300);
-			backView.bounds = Rect(0, 20, width, 300); 
-			timesView.bounds = Rect(0, 0, width, 20);
-			scrollView.refresh;
-		}).knobSize_(1).canFocus_(false).hilightColor_(Color.blue).enabled_(true);
+//		zoomSlider = SmoothSlider(window, Rect(0, 5, 100, 10)).action_({|view| 
+//			var width;
+//			//width = scrollView.bounds.width - 2 + (sf.duration * 160 * ([0.001, 1.001, \exp].asSpec.map(view.value) - 0.001));
+//			// temp fix for userview with large width bug
+//			width = scrollView.bounds.width - 2 + ((32768 - scrollView.bounds.width) * ([0.0, 1.0, \cos].asSpec.map(view.value)));
+//			width = width.round;
+//			eventsView.bounds = Rect(0,0, width, 300);
+//			backView.bounds = Rect(0, 20, width, 300); 
+//			timesView.bounds = Rect(0, 0, width, 20);
+//			scrollView.refresh;
+//		}).knobSize_(1).canFocus_(false).hilightColor_(Color.blue).enabled_(true);
 		StaticText(window, Rect(0, 0, 10, 10)).string_("+").font_(Font("Helvetica-Bold", 10));
 		window.view.decorator.shift(0, -5);
 
@@ -375,7 +376,7 @@ SSTGUI {
 //			curSSTime.string_("Selected Snapshot Time:" + activeSnapshot.time.asTimeString);
 //		});
 
-		zoomSlider.doAction; // hack to make eventsView take mouseDown initially
+		//zoomSlider.doAction; // hack to make eventsView take mouseDown initially
 	}
 	
 	makeTimesView {
@@ -422,7 +423,7 @@ SSTGUI {
 				oneSec = timesView.bounds.width * durInv;
 				Pen.strokeColor = Color.new255(125, 125, 255).alpha_(0.5);
 				//Pen.strokeColor = Color.white;
-				sst.lastEventTime.floor.postln.do({|i|
+				sst.lastEventTime.floor.do({|i|
 				var x;
 				if(i%10 != 0, {
 					Pen.lineDash_(FloatArray[]);
@@ -472,74 +473,61 @@ SSTGUI {
 				});
 			});
 		};
-	//
+
 		eventsView.mouseMoveAction = {|view, x, y, modifiers|
 			var time;
+			var visRange, newX, lastX;
 			if(selectedItem.notNil, {
-				time = (x - selectXOffset) / (durInv * eventsView.bounds.width);
+				inMove = true;
+				// get some info
+				lastX = sst.lastEventTime * durInv * eventsView.bounds.width;
+				visRange = Range(scrollView.visibleOrigin.x, scrollView.bounds.width);
+				newX = (x - visRange.start - selectXOffset) + selectedStartX; // could be more than lastX
+				time = newX / selectedTimePerPixel;
+				postf("newX: % newTime: %\n", newX, time);
+				
+				// now check if we need to extend and recalc durInv
+				if(max(lastX, newX) > (eventsView.bounds.width), {
+					eventsView.bounds = eventsView.bounds.width_(lastX + 300);
+					backView.bounds = backView.bounds.width_(lastX + 300); 
+					timesView.bounds = timesView.bounds.width_(lastX + 300);
+				});
+				
+				// now check if we can see newX and scroll if needed
+				if(visRange.includes(newX).not, {
+					x = x + (scrollView.bounds.width - 30);
+					scrollView.visibleOrigin = (x - scrollView.bounds.width)@scrollView.visibleOrigin.y;
+				});
+				
+				// move or shift
 				if(modifiers.isShift, {
 					sst.shiftItemsLater(time, selectedItem);
 				}, {
 					sst.moveItem(time, selectedItem);
 				});
+				
+				// recalc durInv as bounds may have changed
+				durInv = sst.lastEventTime.reciprocal;
 				eventsView.refresh;
 			});
 		};
 		
-		
-//
-//		eventsView.mouseUpAction = {|view|
-//			var ss, seq, index, next, prev, selected;
-//			index = view.index;
-//			//postf("index: %\n", index);
-//			(index >= 0).if({
-//				//postf("ss(mouseUp): %\n", snapshots);
-//				selected = snapshots[index];
-//				snapshots[index].time = view.value[0][index] * sf.duration;
-//				
-////				// correct for crossovers
-////				next = snapshots[index + 1];
-////				if(next.notNil && {snapshots[index].time > next.time}, {
-////					eventsView.selectIndex(index + 1);
-////					eventsView.refresh;
-////				});
-////				prev = snapshots[index - 1];
-////				if(prev.notNil && {snapshots[index].time < prev.time}, {
-////					eventsView.selectIndex(index - 1);
-////					eventsView.refresh;
-////				});
-//				
-//				// match levels
-//				sequenceLevels[seqs[index]] = eventsView.value[1][index];
-//
-//				this.resetPoints;
-//				this.drawSelections;
-//				
-//				this.setFillColors;
-//			});
-//		};
+		eventsView.mouseUpAction = {|view| inMove = false; };
+
 		eventsView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
 			var selectedAssoc, selectedRect;
 			if(clickCount < 2, {
 				selectedAssoc = itemRects.detect({|assoc| assoc.key.contains(x@y)});
 				selectedItem = selectedAssoc.value; // maybe nil
 				selectedAssoc.notNil.if({
-					selectXOffset = x - (selectedItem.time * durInv * eventsView.bounds.width);
+					visOriginOnSelected = scrollView.visibleOrigin;
+					//selectXOffset = x - (selectedItem.time * durInv * eventsView.bounds.width);
+					selectXOffset = x - visOriginOnSelected.x;
+					selectedStartX = durInv * selectedItem.time * eventsView.bounds.width;
+					selectedTimePerPixel = durInv * eventsView.bounds.width;
 				});
 			});
 		};
-//	
-//		}, {
-//			eventsView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
-//				var newTime;
-//				curSSTime.string_("Selected Snapshot Time:");
-//				// update time cursor
-//				newTime = (x / view.bounds.width) * sf.duration;
-//				ca.timeReference.setTime(newTime);
-//			};
-//			
-//			eventsView.mouseMoveAction = eventsView.mouseDownAction;
-//		});
 	}
 
 
@@ -547,17 +535,24 @@ SSTGUI {
 	update { arg changed, what ...args;
 		//var cursorLoc;
 		
-		switch(what,
-			\times, {
-				var lastX;
-				lastX = sst.lastEventTime * durInv * eventsView.bounds.width;
-				if(lastX > (eventsView.bounds.width), {
-					eventsView.bounds = eventsView.bounds.width_(lastX + 100);
-					backView.bounds = backView.bounds.width_(lastX + 100); 
-					timesView.bounds = timesView.bounds.width_(lastX + 100);
-				});
-			}
-		)
+//		switch(what,
+//			\times, {
+//				var visRange, selectedX, lastX;
+//				if(inMove, {
+//					visRange = Range(scrollView.visibleOrigin.x, scrollView.bounds.width);
+//					selectedX = selectedItem.time * durInv * eventsView.bounds.width;
+//					if(visRange.includes(selectedX).not, {
+//						scrollView.visibleOrigin = selectedX@scrollView.visibleOrigin.y;
+//					});
+//				});
+//				lastX = sst.lastEventTime * durInv * eventsView.bounds.width;
+//				if(lastX > (eventsView.bounds.width), {
+//					eventsView.bounds = eventsView.bounds.width_(lastX + 300);
+//					backView.bounds = backView.bounds.width_(lastX + 300); 
+//					timesView.bounds = timesView.bounds.width_(lastX + 300);
+//				});
+//			}
+//		)
 				
 //		switch(what,
 //			
