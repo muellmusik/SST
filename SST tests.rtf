@@ -42,6 +42,7 @@ t.play;t.clock.beats.postln;\
 \
 \
 \cf2 // GUI\cf0 \
+(\
 t = \cf3 SuperSimpleTimeline\cf0 .new;\
 t.addItem(w = \cf3 SSTItemWrapper\cf0 (0, \{t.clock.beats.postln\}));\
 t.addItem(x = \cf3 SSTItemWrapper\cf0 (1, \{t.clock.beats.postln\}));\
@@ -49,5 +50,10 @@ t.addItem(y = \cf3 SSTItemWrapper\cf0 (4, \{t.clock.beats.postln\}));\
 t.addItem(z = \cf3 SSTItemWrapper\cf0 (12, \{t.clock.beats.postln\}));\
 t.createGroup(\\xy, [x, y]);\
 \
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
-\cf3 SSTGUI\cf0 (t)}
+\cf3 SSTGUI\cf0 (t)\
+)\
+\
+[w, x, y, z].do(\{|iw| iw.time.postln\})\
+\
+t.play(0) \
+t.stop}

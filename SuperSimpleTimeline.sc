@@ -12,6 +12,7 @@
 SuperSimpleTimeline {
 	var <clock, <items, queue, clockStart, nextTime, playOffset;
 	var <groups, <groupOrder;
+	var timeUpdate = 0.05;
 	var playing = false;
 
 	*new {|clock| ^super.new.init(clock); }
@@ -46,8 +47,18 @@ SuperSimpleTimeline {
 			clockStart = clock.beats;
 			thisQueue = queue;
 			clock.sched((nextTime = queue.topPriority) - playOffset, {this.nextEvent(thisQueue)});
+			if(playing.not, {this.startTimeUpdate });
 			playing = true;
 		});
+	}
+	
+	stop { playing = false; queue = nil; }
+	
+	startTimeUpdate {
+		clock.sched(0, { 
+			this.changed(\time, clock.beats - clockStart + playOffset);
+			if(playing, timeUpdate, nil);
+		})
 	}
 	
 	nextEvent {|eventsQueue|
@@ -216,7 +227,7 @@ SSTGUI {
 	var path, sf, durInv, sfView, scrollView, selectView, backView, timesView;
 	var selectedItem, selectedStartX, selectXOffset, selectedTimePerPixel, itemRects, visOriginOnSelected;
 	var dependees;
-	var time, curSSTime, refTime;
+	var time, curSSTime, refTime, cursorLoc;
 	var zoomSlider;
 	var inMove = false;
 	
@@ -364,7 +375,8 @@ SSTGUI {
 			.font_(Font("Helvetica-Bold", 16));
 		//time = BMTimeReferences.currentTime(ca.timeReference);
 		time = sst.currentTime;
-		//sfView.timeCursorPosition = time * sf.sampleRate;
+		cursorLoc = time * durInv * eventsView.bounds.width;
+		
 		refTime.string_("Source Time:" + time.getTimeString);
 					
 		window.view.decorator.shift(0, 4);
@@ -455,6 +467,14 @@ SSTGUI {
 			
 		eventsView.drawFunc = {
 			var stringX = scrollView.visibleOrigin.x + 4;
+			
+			// draw time cursor
+			Pen.strokeColor = Color.grey;
+			Pen.width = 2;
+			Pen.line(cursorLoc@0, cursorLoc@eventsView.bounds.height);
+			Pen.stroke;
+			
+			// draw events and labels
 			itemRects = Array.new(sst.items.size);
 			Pen.strokeColor = Color.black;
 			//Pen.fillColor = Color.grey;
@@ -472,6 +492,7 @@ SSTGUI {
 					itemRects = itemRects.add(rect->item);
 				});
 			});
+			
 		};
 
 		eventsView.mouseMoveAction = {|view, x, y, modifiers|
@@ -535,7 +556,7 @@ SSTGUI {
 
 	
 	update { arg changed, what ...args;
-		//var cursorLoc;
+		
 		
 //		switch(what,
 //			\times, {
@@ -556,28 +577,30 @@ SSTGUI {
 //			}
 //		)
 				
-//		switch(what,
-//			
-//			\time, {
-//				{
-//					time = BMTimeReferences.currentTime(ca.timeReference);
-//					sfView.timeCursorPosition = time * sf.sampleRate;
-//					refTime.string_("Source Time:" + time.asTimeString);
-//					cursorLoc = time * durInv * sfView.bounds.width;
-//					// scroll to see cursor
+		switch(what,
+			
+			\time, {
+				{
+					time = args[0];
+					refTime.string_("Source Time:" + time.asTimeString);
+					cursorLoc = time * durInv * eventsView.bounds.width;
+					// scroll to see cursor
 //					if(args[1] != 0, { // not paused or stopped
-//						if(cursorLoc > (scrollView.visibleOrigin.x + 
-//								scrollView.bounds.width - 2), {
-//							scrollView.visibleOrigin = cursorLoc@0;
-//						}, {
-//							if(cursorLoc < scrollView.visibleOrigin.x, {
-//								scrollView.visibleOrigin = 
-//									(cursorLoc - scrollView.bounds.width - 2)@0;
-//							});
-//						});
-//					});
-//				}.defer;
-//			},
+						if(cursorLoc > (scrollView.visibleOrigin.x + 
+								scrollView.bounds.width - 2), {
+							scrollView.visibleOrigin = cursorLoc@0;
+						}, {
+							if(cursorLoc < scrollView.visibleOrigin.x, {
+								scrollView.visibleOrigin = 
+									(cursorLoc - scrollView.bounds.width - 2)@0;
+							});
+						});
+					//});
+					eventsView.refresh;
+				}.defer;
+			}
+		);
+		
 //			\stop, {
 //				{sfView.timeCursorPosition = 0;}.defer;
 //			},
