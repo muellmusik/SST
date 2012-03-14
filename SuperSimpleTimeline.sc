@@ -402,17 +402,17 @@ SSTGUI {
 			var oneSec, tenSecs, thirtySecs, bounds;
 			bounds = timesView.bounds;
 			Pen.addRect(Rect(0, 0, bounds.width, 20));
-			Pen.fillColor = Color.new255(0, 0, 238);
+			Pen.fillColor = Color.black.alpha_(0.6);
 			Pen.fill;
 
 			tenSecs = timesView.bounds.width * durInv * 10;
 			Pen.beginPath;
-			Pen.strokeColor = Color.new255(125, 125, 255).alpha_(0.8);
+			Pen.strokeColor = Color.grey(0.8);
 			(sst.lastEventTime / 10).floor.do({|i|
 				var x;
 				if((i + 1)%3 == 0, {
 					Pen.width = 2;
-					Pen.lineDash_(FloatArray[]);
+					Pen.lineDash_(FloatArray[1.0, 0]);
 				}, {
 					Pen.width = 1;
 					Pen.lineDash_(FloatArray[3,3]);
@@ -433,7 +433,7 @@ SSTGUI {
 			});
 			if(thirtySecs >= scrollView.bounds.width, {
 				oneSec = timesView.bounds.width * durInv;
-				Pen.strokeColor = Color.new255(125, 125, 255).alpha_(0.5);
+				Pen.strokeColor = Color.grey(0.8);
 				//Pen.strokeColor = Color.white;
 				sst.lastEventTime.floor.do({|i|
 				var x;
@@ -449,7 +449,7 @@ SSTGUI {
 			Pen.lineDash_(FloatArray[3,3]);
 			Pen.line(0@20, bounds.width@20);
 			Pen.stroke;
-			Pen.lineDash_(FloatArray[]);
+			Pen.lineDash_(FloatArray[1.0, 0.0]);
 		};
 		
 //		timesView.mouseDownAction = sfView.mouseDownAction;
