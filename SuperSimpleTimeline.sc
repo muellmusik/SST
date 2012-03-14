@@ -438,7 +438,7 @@ SSTGUI {
 				sst.lastEventTime.floor.do({|i|
 				var x;
 				if(i%10 != 0, {
-					Pen.lineDash_(FloatArray[]);
+					Pen.lineDash_(FloatArray[1.0, 0.0]);
 					x = i * oneSec;
 					Pen.line(x@20, x@10);
 					Pen.stroke;
@@ -474,7 +474,6 @@ SSTGUI {
 			Pen.line(cursorLoc@0, cursorLoc@eventsView.bounds.height);
 			Pen.stroke;
 			
-			// draw events and labels
 			itemRects = Array.new(sst.items.size);
 			Pen.strokeColor = Color.black;
 			//Pen.fillColor = Color.grey;
@@ -483,9 +482,12 @@ SSTGUI {
 				
 				groupY = ((i * 40) + 30);
 				
+				// draw labels
 				Pen.stringAtPoint(name.asString, stringX@(i * 40 + 4), Font( Font.defaultSansFace, 10 ).boldVariant, Color.grey(0.3));
 				
+				// draw lines
 				if(name != 'Ungrouped', {
+					Pen.lineDash = FloatArray[4.0, 2.0];
 					sst.groups[name].items.doAdjacentPairs({|a, b|
 						var x1, x2;
 						x1 = durInv * a.time * eventsView.bounds.width;
@@ -494,9 +496,10 @@ SSTGUI {
 						Pen.line(x1@groupY, x2@groupY);
 						Pen.stroke;
 					});
+					Pen.lineDash = FloatArray[1.0, 0];
 				});
 				
-				
+				// draw events
 				Pen.fillColor = Color.rand;
 				sst.groups[name].items.reverseDo({|item| // draw earlier items on top
 					var x, rect;
