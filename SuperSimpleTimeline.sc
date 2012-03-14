@@ -536,8 +536,7 @@ SSTGUI {
 				
 				// now check if we can see newX and scroll if needed
 				if(visRange.includes(newX).not, {
-					x = x + (scrollView.bounds.width - 30);
-					scrollView.visibleOrigin = (x - scrollView.bounds.width)@scrollView.visibleOrigin.y;
+					scrollView.visibleOrigin = (newX - 30)@scrollView.visibleOrigin.y;
 				});
 				
 				// move or shift
