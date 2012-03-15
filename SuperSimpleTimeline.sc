@@ -517,7 +517,7 @@ SSTGUI {
 
 		eventsView.mouseMoveAction = {|view, x, y, modifiers|
 			var time;
-			var visRange, newX, lastX;
+			var visRange, newX, lastX, maxX;
 			if(selectedItem.notNil, {
 				inMove = true;
 				// get some info
@@ -529,16 +529,21 @@ SSTGUI {
 				
 				// now check if we need to extend and recalc durInv
 				// if we comment this out we get a zooming behaviour with no jumps
-				if(max(lastX, newX) > (eventsView.bounds.width), {
-					eventsView.bounds = eventsView.bounds.width_(lastX + 300);
-					backView.bounds = backView.bounds.width_(lastX + 300); 
-					timesView.bounds = timesView.bounds.width_(lastX + 300);
+				if((maxX = max(lastX, newX)) > (eventsView.bounds.width), {
+					eventsView.bounds = eventsView.bounds.width_(maxX);
+					backView.bounds = backView.bounds.width_(maxX); 
+					timesView.bounds = timesView.bounds.width_(maxX);
 				});
 				
 				// now check if we can see newX and scroll if needed
-				if(visRange.includes(newX).not, {
-					scrollView.visibleOrigin = (newX - 30)@scrollView.visibleOrigin.y;
+
+				if(visRange.start > newX, {
+					scrollView.visibleOrigin = newX@scrollView.visibleOrigin.y;
 				});
+				if(visRange.end < newX, {
+					scrollView.visibleOrigin = (newX - scrollView.bounds.width + 25)@scrollView.visibleOrigin.y;
+				});
+				
 				
 				// move or shift
 				if(modifiers.isShift, {
