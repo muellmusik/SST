@@ -424,11 +424,11 @@ SSTGUI {
 			Pen.width = 1;
 			Pen.lineDash_(FloatArray[]);
 			thirtySecs = bounds.width * durInv * 30;
-			(sst.lastEventTime / 30).floor.do({|i|
-				((i + 1) * 30).asTimeString.drawLeftJustIn(
-					Rect((i+1) * thirtySecs + 1, 0, 50, 20),
+			(sst.lastEventTime / 10).floor.do({|i|
+				((i + 1) * 10).asTimeString(1).drawLeftJustIn(
+					Rect((i+1) * tenSecs + 2, 0, 70, 20),
 					Font("Helvetica-Bold", 11), 
-					Color.black
+					Color.grey(0.8)
 				); 
 			});
 			if(thirtySecs >= scrollView.bounds.width, {
