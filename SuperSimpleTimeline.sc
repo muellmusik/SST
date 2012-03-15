@@ -12,8 +12,8 @@
 SuperSimpleTimeline {
 	var <clock, <items, queue, clockStart, nextTime, playOffset;
 	var <groups, <groupOrder;
-	var timeUpdate = 0.02;
-	var playing = false;
+	var <timeUpdate = 0.02;
+	var <playing = false;
 
 	*new {|clock| ^super.new.init(clock); }
 	
@@ -232,7 +232,7 @@ SSTGUI {
 	var time, curSSTime, refTime, cursorLoc;
 	var zoomSlider;
 	var inMove = false;
-	var firedItems, firedEnv;
+	var firedItems, firedEnv, fadeDur = 0.3;
 	
 	*new {|sst, name, origin|
 		^super.new.init(sst, name ? "SuperSimpleTimeline").makeWindow(origin ? (200@200));
@@ -243,7 +243,7 @@ SSTGUI {
 		name = argName;
 		dependees = [sst.addDependant(this)]; // sst is the time ref
 		firedItems = IdentityDictionary.new;
-		firedEnv = Env([1, 0], [1], \sine);
+		firedEnv = Env([1, 0], [fadeDur], \sine);
 		//dependees = [sst.addDependant(this), sst.timeReference.addDependant(this)];
 		//sequenceLevels = IdentityDictionary.new;
 //		ca.sequences.do({|sq, i| sequenceLevels[sq] = (0.1 * (i + 1))%1.0});
@@ -486,15 +486,13 @@ SSTGUI {
 			Pen.stroke;
 			
 			// draw fired rings
-			firedItems.copy.keysValuesDo({|firedItem, fireTime|
-				var x, rect, alpha, groupY;
-				
-				groupY = ((sst.groupOrder.indexOf(firedItem.group.name) * 40) + 30);
+			firedItems.copy.keysValuesDo({|firedItem, itemSpecs|
+				var x, rect, alpha;
 				x = durInv * firedItem.time * eventsView.bounds.width;
-				rect = Rect.aboutPoint(x@groupY, 13, 13);
-				alpha = firedEnv.at(time - fireTime);
+				rect = Rect.aboutPoint(x@itemSpecs.groupY, 13, 13);
+				alpha = itemSpecs.alpha;
 				if(alpha == 0, { firedItems[firedItem] = nil; }); // remove if done
-				Pen.fillColor = Color.black.alpha_(alpha);
+				Pen.fillColor = Color.white.alpha_(alpha);
 				//Pen.width = 3;
 				Pen.fillOval(rect);
 				//Pen.strokeOval(rect);
@@ -656,10 +654,21 @@ SSTGUI {
 			},
 			
 		\itemFired, {
-			var itemFired;
+			var itemFired, firedTime, interval;
 			itemFired = args[0];
-			firedItems[itemFired] = itemFired.time;
-			//cursorView.refresh;
+			firedTime = itemFired.time;
+			interval = sst.timeUpdate;
+			firedItems[itemFired] = (alpha: 1.0, groupY: (sst.groupOrder.indexOf(itemFired.group.name) * 40) + 30);
+			{
+				var fadeTime = 0;
+				while({fadeTime <= fadeDur }, {
+					firedItems[itemFired].alpha = firedEnv.at(fadeTime);
+					sst.playing.not.if({cursorView.refresh}); // could have finished
+					fadeTime = fadeTime + interval;
+					interval.wait;
+				});
+				firedItems[itemFired] = nil;
+			}.fork(AppClock);
 		} 
 		);
 		
