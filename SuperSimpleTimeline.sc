@@ -142,7 +142,7 @@ SuperSimpleTimeline {
 	
 	lastEventTime { ^if(items.size > 0, {items.last.time}, {0}); } // more meaningful than duration
 	
-	currentTime { ^if(playing, {clock.beats - clock.start}, { 0 }) } // refine later
+	currentTime { ^if(playing, {clock.beats - clockStart}, { 0 }) } // refine later
 	
 }
 
