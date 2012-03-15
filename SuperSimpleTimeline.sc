@@ -12,7 +12,7 @@
 SuperSimpleTimeline {
 	var <clock, <items, queue, clockStart, nextTime, playOffset;
 	var <groups, <groupOrder;
-	var timeUpdate = 0.05;
+	var timeUpdate = 0.02;
 	var playing = false;
 
 	*new {|clock| ^super.new.init(clock); }
