@@ -468,6 +468,7 @@ SSTGUI {
 		eventsView.drawFunc = {
 			var stringX = scrollView.visibleOrigin.x + 4;
 			
+			DrawGrid(eventsView.bounds, [0, sst.lastEventTime, 'lin', 1.0].asSpec.grid, BlankGridLines()).draw;
 			// draw time cursor
 			Pen.strokeColor = Color.grey;
 			Pen.width = 2;
