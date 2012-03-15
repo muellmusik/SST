@@ -62,11 +62,13 @@ SuperSimpleTimeline {
 	}
 	
 	nextEvent {|eventsQueue|
-		var lastTime, thisQueue = queue;
+		var lastTime, thisQueue = queue, thisItem;
 		// test that the queue hasn't been edited
 		// unfortunately, there's no way to remove a single scheduled event from a clock
 		if(eventsQueue === queue, {
-			queue.pop.value;		
+			thisItem = queue.pop;
+			thisItem.value;
+			this.changed(\itemFired, thisItem);
 			lastTime = nextTime;
 			if(queue.notEmpty, { 
 				clock.sched((nextTime = queue.topPriority) - lastTime, 
@@ -230,6 +232,7 @@ SSTGUI {
 	var time, curSSTime, refTime, cursorLoc;
 	var zoomSlider;
 	var inMove = false;
+	var firedItems, firedEnv;
 	
 	*new {|sst, name, origin|
 		^super.new.init(sst, name ? "SuperSimpleTimeline").makeWindow(origin ? (200@200));
@@ -239,6 +242,8 @@ SSTGUI {
 		sst = argSST;
 		name = argName;
 		dependees = [sst.addDependant(this)]; // sst is the time ref
+		firedItems = IdentityDictionary.new;
+		firedEnv = Env([1, 0], [1], \sine);
 		//dependees = [sst.addDependant(this), sst.timeReference.addDependant(this)];
 		//sequenceLevels = IdentityDictionary.new;
 //		ca.sequences.do({|sq, i| sequenceLevels[sq] = (0.1 * (i + 1))%1.0});
@@ -479,6 +484,22 @@ SSTGUI {
 			Pen.width = 2;
 			Pen.line(cursorLoc@0, cursorLoc@eventsView.bounds.height);
 			Pen.stroke;
+			
+			// draw fired rings
+			firedItems.copy.keysValuesDo({|firedItem, fireTime|
+				var x, rect, alpha, groupY;
+				
+				groupY = ((sst.groupOrder.indexOf(firedItem.group.name) * 40) + 30);
+				x = durInv * firedItem.time * eventsView.bounds.width;
+				rect = Rect.aboutPoint(x@groupY, 13, 13);
+				alpha = firedEnv.at(time - fireTime);
+				if(alpha == 0, { firedItems[firedItem] = nil; }); // remove if done
+				Pen.fillColor = Color.black.alpha_(alpha);
+				//Pen.width = 3;
+				Pen.fillOval(rect);
+				//Pen.strokeOval(rect);
+			});
+				
 		};
 			
 		eventsView.drawFunc = {
@@ -632,7 +653,14 @@ SSTGUI {
 					//});
 					cursorView.refresh;
 				}.defer;
-			}
+			},
+			
+		\itemFired, {
+			var itemFired;
+			itemFired = args[0];
+			firedItems[itemFired] = itemFired.time;
+			//cursorView.refresh;
+		} 
 		);
 		
 //			\stop, {
