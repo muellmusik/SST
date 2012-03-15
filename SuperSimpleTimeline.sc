@@ -223,7 +223,7 @@ SSTTextWrapper {
 }
 
 SSTGUI {
-	var sst, eventsView, window, name, onClose;
+	var sst, eventsView, cursorView, window, name, onClose;
 	var path, sf, durInv, sfView, scrollView, selectView, backView, timesView;
 	var selectedItem, selectedStartX, selectXOffset, selectedTimePerPixel, itemRects, visOriginOnSelected;
 	var dependees;
@@ -375,7 +375,7 @@ SSTGUI {
 			.font_(Font("Helvetica-Bold", 16));
 		//time = BMTimeReferences.currentTime(ca.timeReference);
 		time = sst.currentTime;
-		cursorLoc = time * durInv * eventsView.bounds.width;
+		cursorLoc = time * durInv * cursorView.bounds.width;
 		
 		refTime.string_("Source Time:" + time.getTimeString);
 					
@@ -457,23 +457,32 @@ SSTGUI {
 	}
 	
 	makeEventsView {
+		cursorView.notNil.if({cursorView.remove});
 		eventsView.notNil.if({eventsView.remove});
 		
 		scrollView.action = { eventsView.refresh }; // for now. Could but labels in a separate lower view
 		
+		cursorView = UserView(backView, Rect(0, 0, backView.bounds.width, backView.bounds.height))
+			.canFocus_(false)
+			.background_(Color.clear);
+			
 		eventsView = UserView(backView, Rect(0, 0, backView.bounds.width, backView.bounds.height))
 			.canFocus_(false)
 			.background_(Color.clear);
 			
-		eventsView.drawFunc = {
-			var stringX = scrollView.visibleOrigin.x + 4;
-			
+		cursorView.drawFunc = {
+			// draw grid
 			DrawGrid(eventsView.bounds, [0, sst.lastEventTime, 'lin', 1.0].asSpec.grid, BlankGridLines()).draw;
+			
 			// draw time cursor
 			Pen.strokeColor = Color.grey;
 			Pen.width = 2;
 			Pen.line(cursorLoc@0, cursorLoc@eventsView.bounds.height);
 			Pen.stroke;
+		};
+			
+		eventsView.drawFunc = {
+			var stringX = scrollView.visibleOrigin.x + 4;
 			
 			itemRects = Array.new(sst.items.size);
 			Pen.strokeColor = Color.black;
@@ -525,18 +534,20 @@ SSTGUI {
 				visRange = Range(scrollView.visibleOrigin.x, scrollView.bounds.width);
 				newX = (x - visRange.start - selectXOffset) + selectedStartX; // could be more than lastX
 				time = newX / selectedTimePerPixel;
-				postf("newX: % newTime: %\n", newX, time);
+				//postf("newX: % newTime: %\n", newX, time);
 				
 				// now check if we need to extend and recalc durInv
 				// if we comment this out we get a zooming behaviour with no jumps
 				if((maxX = max(lastX, newX)) > (eventsView.bounds.width), {
 					eventsView.bounds = eventsView.bounds.width_(maxX);
+					cursorView.bounds = eventsView.bounds.width_(maxX);
 					backView.bounds = backView.bounds.width_(maxX); 
 					timesView.bounds = timesView.bounds.width_(maxX);
+					timesView.refresh;
+					cursorView.refresh;
 				});
 				
 				// now check if we can see newX and scroll if needed
-
 				if(visRange.start > newX, {
 					scrollView.visibleOrigin = newX@scrollView.visibleOrigin.y;
 				});
@@ -554,7 +565,6 @@ SSTGUI {
 				
 				// recalc durInv as bounds may have changed
 				durInv = sst.lastEventTime.reciprocal;
-				timesView.refresh;
 				eventsView.refresh;
 			});
 		};
@@ -620,7 +630,7 @@ SSTGUI {
 							});
 						});
 					//});
-					eventsView.refresh;
+					cursorView.refresh;
 				}.defer;
 			}
 		);
