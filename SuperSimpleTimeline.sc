@@ -227,11 +227,11 @@ SSTTextWrapper {
 SSTGUI {
 	var sst, eventsView, cursorView, window, name, onClose;
 	var path, sf, durInv, sfView, scrollView, selectView, backView, timesView;
-	var selectedItem, selectedStartX, selectXOffset, selectedTimePerPixel, itemRects, visOriginOnSelected;
+	var selectedItem, selectedStartX, selectedStartY, selectXOffset, selectYOffset, selectedTimePerPixel, itemRects, visOriginOnSelected;
 	var dependees;
 	var time, curSSTime, refTime, cursorLoc;
-	var zoomSlider;
-	var inMove = false;
+	var zoomSlider, labelFont, labelBounds;
+	var inMove = false, groupDragItem, groupDragRect, groupDraggedTo;
 	var firedItems, firedEnv, fadeDur = 0.3;
 	
 	*new {|sst, name, origin|
@@ -244,6 +244,8 @@ SSTGUI {
 		dependees = [sst.addDependant(this)]; // sst is the time ref
 		firedItems = IdentityDictionary.new;
 		firedEnv = Env([1, 0], [fadeDur], \sine);
+		labelFont = Font( Font.defaultSansFace, 10 ).boldVariant;
+		labelBounds = IdentityDictionary.new;
 		//dependees = [sst.addDependant(this), sst.timeReference.addDependant(this)];
 		//sequenceLevels = IdentityDictionary.new;
 //		ca.sequences.do({|sq, i| sequenceLevels[sq] = (0.1 * (i + 1))%1.0});
@@ -502,17 +504,24 @@ SSTGUI {
 			
 		eventsView.drawFunc = {
 			var stringX = scrollView.visibleOrigin.x + 4;
-			
+			groupDraggedTo = nil;
 			itemRects = Array.new(sst.items.size);
 			Pen.strokeColor = Color.black;
 			//Pen.fillColor = Color.grey;
 			sst.groupOrder.do({|name, i|
-				var groupY;
+				var groupY, labelPoint, thisLabelBounds;
 				
 				groupY = ((i * 40) + 30);
 				
 				// draw labels
-				Pen.stringAtPoint(name.asString, stringX@(i * 40 + 4), Font( Font.defaultSansFace, 10 ).boldVariant, Color.grey(0.3));
+				labelPoint = stringX@(i * 40 + 4);
+				labelBounds[name] = thisLabelBounds = GUI.current.stringBounds(name.asString, labelFont).moveToPoint(labelPoint);
+				if(groupDragItem.notNil && { thisLabelBounds.intersects(groupDragRect) }, {
+					Pen.fillColor = Color.white.alpha_(0.6);
+					Pen.fillRect(thisLabelBounds.resizeBy(4, 4).moveBy(-2, -2));
+					groupDraggedTo = name;
+				});
+				Pen.stringAtPoint(name.asString, stringX@(i * 40 + 4), labelFont, Color.grey(0.3));
 				
 				// draw lines
 				if(name != 'Ungrouped', {
@@ -540,55 +549,75 @@ SSTGUI {
 					itemRects = itemRects.add(rect->item);
 				});
 			});
-			
+			// draw group drag if needed
+			if(groupDragItem.notNil, {
+				Pen.width = 1;
+				Pen.strokeColor = Color.grey;
+				Pen.lineDash = FloatArray[3.0, 1.0];
+				Pen.strokeOval(groupDragRect);
+				Pen.lineDash = FloatArray[1.0, 0.0];
+			});
 		};
 
 		eventsView.mouseMoveAction = {|view, x, y, modifiers|
 			var time;
 			var visRange, newX, lastX, maxX;
 			if(selectedItem.notNil, {
-				inMove = true;
-				// get some info
-				lastX = sst.lastEventTime * durInv * eventsView.bounds.width;
-				visRange = Range(scrollView.visibleOrigin.x, scrollView.bounds.width);
-				newX = (x - visRange.start - selectXOffset) + selectedStartX; // could be more than lastX
-				time = newX / selectedTimePerPixel;
-				//postf("newX: % newTime: %\n", newX, time);
-				
-				// now check if we need to extend and recalc durInv
-				// if we comment this out we get a zooming behaviour with no jumps
-				if((maxX = max(lastX, newX)) > (eventsView.bounds.width), {
-					eventsView.bounds = eventsView.bounds.width_(maxX);
-					cursorView.bounds = eventsView.bounds.width_(maxX);
-					backView.bounds = backView.bounds.width_(maxX); 
-					timesView.bounds = timesView.bounds.width_(maxX);
-					timesView.refresh;
-					cursorView.refresh;
+				if(groupDragItem.notNil, {	// drag item to a group
+					groupDragRect = Rect((x - scrollView.visibleOrigin.x - selectXOffset) + selectedStartX, (y - scrollView.visibleOrigin.y - selectYOffset) + selectedStartY, 20, 20);
+					eventsView.refresh;
+				}, {	// vanilla move or shift
+					inMove = true;
+					// get some info
+					lastX = sst.lastEventTime * durInv * eventsView.bounds.width;
+					visRange = Range(scrollView.visibleOrigin.x, scrollView.bounds.width);
+					newX = (x - visRange.start - selectXOffset) + selectedStartX; // could be more than lastX
+					time = newX / selectedTimePerPixel;
+					//postf("newX: % newTime: %\n", newX, time);
+					
+					// now check if we need to extend and recalc durInv
+					// if we comment this out we get a zooming behaviour with no jumps
+					if((maxX = max(lastX, newX)) > (eventsView.bounds.width), {
+						eventsView.bounds = eventsView.bounds.width_(maxX);
+						cursorView.bounds = eventsView.bounds.width_(maxX);
+						backView.bounds = backView.bounds.width_(maxX); 
+						timesView.bounds = timesView.bounds.width_(maxX);
+						timesView.refresh;
+						cursorView.refresh;
+					});
+					
+					// now check if we can see newX and scroll if needed
+					if(visRange.start > newX, {
+						scrollView.visibleOrigin = newX@scrollView.visibleOrigin.y;
+					});
+					if(visRange.end < newX, {
+						scrollView.visibleOrigin = (newX - scrollView.bounds.width + 25)@scrollView.visibleOrigin.y;
+					});
+					
+					
+					// move or shift
+					if(modifiers.isShift, {
+						sst.shiftItemsLater(time, selectedItem);
+					}, {
+						sst.moveItem(time, selectedItem);
+					});
+					
+					// recalc durInv as bounds may have changed
+					durInv = sst.lastEventTime.reciprocal;
+					eventsView.refresh;
 				});
-				
-				// now check if we can see newX and scroll if needed
-				if(visRange.start > newX, {
-					scrollView.visibleOrigin = newX@scrollView.visibleOrigin.y;
-				});
-				if(visRange.end < newX, {
-					scrollView.visibleOrigin = (newX - scrollView.bounds.width + 25)@scrollView.visibleOrigin.y;
-				});
-				
-				
-				// move or shift
-				if(modifiers.isShift, {
-					sst.shiftItemsLater(time, selectedItem);
-				}, {
-					sst.moveItem(time, selectedItem);
-				});
-				
-				// recalc durInv as bounds may have changed
-				durInv = sst.lastEventTime.reciprocal;
-				eventsView.refresh;
 			});
 		};
 		
-		eventsView.mouseUpAction = {|view| inMove = false; };
+		eventsView.mouseUpAction = {|view|
+			inMove = false; 
+			if(groupDragItem.notNil, {
+				if(groupDraggedTo.notNil, { sst.groups[groupDraggedTo].addItem(groupDragItem); });
+				groupDragItem = nil;
+				eventsView.refresh;
+			});
+		
+		};
 
 		eventsView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
 			var selectedAssoc, selectedRect;
@@ -599,8 +628,14 @@ SSTGUI {
 					visOriginOnSelected = scrollView.visibleOrigin;
 					//selectXOffset = x - (selectedItem.time * durInv * eventsView.bounds.width);
 					selectXOffset = x - visOriginOnSelected.x;
+					selectYOffset = y - visOriginOnSelected.y;
 					selectedStartX = durInv * selectedItem.time * eventsView.bounds.width;
+					selectedStartY = y;
 					selectedTimePerPixel = durInv * eventsView.bounds.width;
+					if(modifiers.isCtrl, { 
+						groupDragItem = selectedItem;
+						groupDragRect = Rect((x - scrollView.visibleOrigin.x - selectXOffset) + selectedStartX, (y - scrollView.visibleOrigin.y - selectYOffset) + selectedStartY, 20, 20);
+					});
 				});
 			});
 		};
