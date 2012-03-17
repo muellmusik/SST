@@ -227,11 +227,11 @@ SSTTextWrapper {
 SSTGUI {
 	var sst, eventsView, cursorView, window, name, onClose;
 	var path, sf, durInv, sfView, scrollView, selectView, backView, timesView;
-	var selectedItem, selectedStartX, selectedStartY, selectXOffset, selectYOffset, selectedTimePerPixel, itemRects, visOriginOnSelected;
+	var selectedItem, selectedStartX, selectXOffset, selectedTimePerPixel, itemRects, visOriginOnSelected, selectedRect;
 	var dependees;
 	var time, curSSTime, refTime, cursorLoc;
 	var zoomSlider, labelFont, labelBounds;
-	var inMove = false, groupDragItem, groupDragRect, groupDraggedTo;
+	var inMove = false, groupDragItem, groupDragRect, groupDraggedTo, groupDragStartX, groupDragStartY;
 	var firedItems, firedEnv, fadeDur = 0.3;
 	
 	*new {|sst, name, origin|
@@ -246,6 +246,7 @@ SSTGUI {
 		firedEnv = Env([1, 0], [fadeDur], \sine);
 		labelFont = Font( Font.defaultSansFace, 10 ).boldVariant;
 		labelBounds = IdentityDictionary.new;
+		itemRects = IdentityDictionary.new;
 		//dependees = [sst.addDependant(this), sst.timeReference.addDependant(this)];
 		//sequenceLevels = IdentityDictionary.new;
 //		ca.sequences.do({|sq, i| sequenceLevels[sq] = (0.1 * (i + 1))%1.0});
@@ -546,7 +547,7 @@ SSTGUI {
 					Pen.width = 1;
 					Pen.fillOval(rect);
 					Pen.strokeOval(rect);
-					itemRects = itemRects.add(rect->item);
+					itemRects = itemRects[rect] = item;
 				});
 			});
 			// draw group drag if needed
@@ -564,7 +565,7 @@ SSTGUI {
 			var visRange, newX, lastX, maxX;
 			if(selectedItem.notNil, {
 				if(groupDragItem.notNil, {	// drag item to a group
-					groupDragRect = Rect((x - scrollView.visibleOrigin.x - selectXOffset) + selectedStartX, (y - scrollView.visibleOrigin.y - selectYOffset) + selectedStartY, 20, 20);
+					groupDragRect = selectedRect.moveBy(x - groupDragStartX, y - groupDragStartY);
 					eventsView.refresh;
 				}, {	// vanilla move or shift
 					inMove = true;
@@ -614,27 +615,28 @@ SSTGUI {
 			if(groupDragItem.notNil, {
 				if(groupDraggedTo.notNil, { sst.groups[groupDraggedTo].addItem(groupDragItem); });
 				groupDragItem = nil;
+				groupDragRect = nil;
+				selectedRect = nil;
 				eventsView.refresh;
 			});
 		
 		};
 
 		eventsView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
-			var selectedAssoc, selectedRect;
 			if(clickCount < 2, {
-				selectedAssoc = itemRects.detect({|assoc| assoc.key.contains(x@y)});
-				selectedItem = selectedAssoc.value; // maybe nil
-				selectedAssoc.notNil.if({
+				selectedRect = itemRects.keys.detect({|rect| rect.contains(x@y)});
+				selectedItem = itemRects[selectedRect]; // maybe nil
+				selectedItem.notNil.if({
 					visOriginOnSelected = scrollView.visibleOrigin;
 					//selectXOffset = x - (selectedItem.time * durInv * eventsView.bounds.width);
 					selectXOffset = x - visOriginOnSelected.x;
-					selectYOffset = y - visOriginOnSelected.y;
 					selectedStartX = durInv * selectedItem.time * eventsView.bounds.width;
-					selectedStartY = y;
 					selectedTimePerPixel = durInv * eventsView.bounds.width;
-					if(modifiers.isCtrl, { 
+					if(modifiers.isCtrl, {
+						groupDragStartX = x; 
+						groupDragStartY = y;
 						groupDragItem = selectedItem;
-						groupDragRect = Rect((x - scrollView.visibleOrigin.x - selectXOffset) + selectedStartX, (y - scrollView.visibleOrigin.y - selectYOffset) + selectedStartY, 20, 20);
+						groupDragRect = selectedRect;
 					});
 				});
 			});
