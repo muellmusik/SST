@@ -606,6 +606,7 @@ SSTGUI {
 					// recalc durInv as bounds may have changed
 					durInv = sst.lastEventTime.reciprocal;
 					eventsView.refresh;
+					if(modifiers.isShift, { timesView.refresh; cursorView.refresh; });
 				});
 			});
 		};
