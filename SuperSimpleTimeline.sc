@@ -505,23 +505,23 @@ SSTGUI {
 		eventsView.drawFunc = {
 			var stringX = scrollView.visibleOrigin.x + 4;
 			groupDraggedTo = nil;
-			itemRects = Array.new(sst.items.size);
 			Pen.strokeColor = Color.black;
 			//Pen.fillColor = Color.grey;
 			sst.groupOrder.do({|name, i|
-				var groupY, labelPoint, thisLabelBounds;
+				var groupY, labelPoint, label, thisLabelBounds;
 				
 				groupY = ((i * 40) + 30);
 				
 				// draw labels
+				label = (i + 1).asString ++ ". " ++ name.asString;
 				labelPoint = stringX@(i * 40 + 4);
-				labelBounds[name] = thisLabelBounds = GUI.current.stringBounds(name.asString, labelFont).moveToPoint(labelPoint);
+				labelBounds[name] = thisLabelBounds = GUI.current.stringBounds(label, labelFont).moveToPoint(labelPoint);
 				if(groupDragItem.notNil && { thisLabelBounds.intersects(groupDragRect) }, {
 					Pen.fillColor = Color.white.alpha_(0.6);
 					Pen.fillRect(thisLabelBounds.resizeBy(4, 4).moveBy(-2, -2));
 					groupDraggedTo = name;
 				});
-				Pen.stringAtPoint(name.asString, stringX@(i * 40 + 4), labelFont, Color.grey(0.3));
+				Pen.stringAtPoint(label, stringX@(i * 40 + 4), labelFont, Color.grey(0.3));
 				
 				// draw lines
 				if(name != 'Ungrouped', {
