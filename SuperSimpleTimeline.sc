@@ -690,23 +690,23 @@ SSTGUI {
 				}.defer;
 			},
 			
-		\itemFired, {
-			var itemFired, firedTime, interval;
-			itemFired = args[0];
-			firedTime = itemFired.time;
-			interval = sst.timeUpdate;
-			firedItems[itemFired] = (alpha: 1.0, groupY: (sst.groupOrder.indexOf(itemFired.group.name) * 40) + 30);
-			{
-				var fadeTime = 0;
-				while({fadeTime <= fadeDur }, {
-					firedItems[itemFired].alpha = firedEnv.at(fadeTime);
-					sst.playing.not.if({cursorView.refresh}); // could have finished
-					fadeTime = fadeTime + interval;
-					interval.wait;
-				});
-				firedItems[itemFired] = nil;
-			}.fork(AppClock);
-		} 
+			\itemFired, {
+				var itemFired, firedTime, interval;
+				itemFired = args[0];
+				firedTime = itemFired.time;
+				interval = sst.timeUpdate;
+				firedItems[itemFired] = (alpha: 1.0, groupY: (sst.groupOrder.indexOf(itemFired.group.name) * 40) + 30);
+				{
+					var fadeTime = 0;
+					while({fadeTime <= fadeDur }, {
+						firedItems[itemFired].alpha = firedEnv.at(fadeTime);
+						sst.playing.not.if({cursorView.refresh}); // could have finished
+						fadeTime = fadeTime + interval;
+						interval.wait;
+					});
+					firedItems[itemFired] = nil;
+				}.fork(AppClock);
+			} 
 		);
 		
 //			\stop, {
