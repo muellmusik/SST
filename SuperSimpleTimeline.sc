@@ -547,7 +547,7 @@ SSTGUI {
 					Pen.width = 1;
 					Pen.fillOval(rect);
 					Pen.strokeOval(rect);
-					itemRects = itemRects[rect] = item;
+					itemRects[item] = rect;
 				});
 			});
 			// draw group drag if needed
@@ -617,17 +617,18 @@ SSTGUI {
 				if(groupDraggedTo.notNil, { sst.groups[groupDraggedTo].addItem(groupDragItem); });
 				groupDragItem = nil;
 				groupDragRect = nil;
-				selectedRect = nil;
 				eventsView.refresh;
 			});
-		
 		};
 
 		eventsView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
 			if(clickCount < 2, {
-				selectedRect = itemRects.keys.detect({|rect| rect.contains(x@y)});
-				selectedItem = itemRects[selectedRect]; // maybe nil
-				selectedItem.notNil.if({
+				selectedRect = nil;
+				selectedItem = nil;
+				itemRects.keysValuesDo({|item, rect|
+					if(rect.contains((x@y).postln).postln, {selectedRect = rect; selectedItem = item;})
+				});
+				selectedRect.postln.notNil.if({
 					visOriginOnSelected = scrollView.visibleOrigin;
 					//selectXOffset = x - (selectedItem.time * durInv * eventsView.bounds.width);
 					selectXOffset = x - visOriginOnSelected.x;
