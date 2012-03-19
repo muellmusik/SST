@@ -91,7 +91,7 @@ SuperSimpleTimeline {
 		item.time = time;
 		items.sort;
 		if(playing, {this.play(clock.beats - clockStart)}); // this will rebuild the queue
-		this.changed(\times);
+		this.changed(\itemTimes);
 	}
 	
 	shiftItemsLater {|time, firstItem| 
@@ -102,7 +102,7 @@ SuperSimpleTimeline {
 		for(ind, items.size-1, {|i| item = items[i]; item.time = item.time + shiftAmount });
 		items.sort;
 		if(playing, {this.play(clock.beats - clockStart)}); // this will rebuild the queue
-		this.changed(\times);
+		this.changed(\itemTimes);
 	}
 	
 	//shiftItemsBefore {|lastItem, time| } // don't think we need this
@@ -227,7 +227,7 @@ SSTTextWrapper {
 SSTGUI {
 	var sst, eventsView, cursorView, window, name, onClose;
 	var path, sf, durInv, sfView, scrollView, selectView, backView, timesView;
-	var selectedItem, selectedStartX, selectXOffset, selectedTimePerPixel, itemRects, visOriginOnSelected, selectedRect;
+	var selectedItem, selectedStartX, selectXOffset, timePerPixel, itemRects, visOriginOnSelected, selectedRect;
 	var dependees;
 	var time, curSSTime, refTime, cursorLoc;
 	var zoomSlider, labelFont, labelBounds;
@@ -297,6 +297,8 @@ SSTGUI {
 		window.front;
 		
 		this.makeEventsView;
+		
+		timePerPixel = sst.lastEventTime / eventsView.bounds.width;
 		
 		window.view.decorator.nextLine.nextLine;
 		window.view.decorator.shift(10, 0);
@@ -495,18 +497,26 @@ SSTGUI {
 					lastX = sst.lastEventTime * durInv * eventsView.bounds.width;
 					visRange = Range(scrollView.visibleOrigin.x, scrollView.bounds.width);
 					newX = (x - visRange.start - selectXOffset) + selectedStartX; // could be more than lastX
-					time = newX / selectedTimePerPixel;
+					time = newX * timePerPixel;
 					//postf("newX: % newTime: %\n", newX, time);
 					
-					// now check if we need to extend and recalc durInv
-					// if we comment this out we get a zooming behaviour with no jumps
-					if((maxX = max(lastX, newX)) > (eventsView.bounds.width), {
-						eventsView.bounds = eventsView.bounds.width_(maxX);
-						cursorView.bounds = eventsView.bounds.width_(maxX);
-						backView.bounds = backView.bounds.width_(maxX); 
-						timesView.bounds = timesView.bounds.width_(maxX);
-						timesView.refresh;
-						cursorView.refresh;
+//					// now check if we need to extend and recalc durInv
+//					// if we comment this out we get a zooming behaviour with no jumps
+//					if((maxX = max(lastX, newX)) > (eventsView.bounds.width), {
+//						eventsView.bounds = eventsView.bounds.width_(maxX);
+//						cursorView.bounds = eventsView.bounds.width_(maxX);
+//						backView.bounds = backView.bounds.width_(maxX); 
+//						timesView.bounds = timesView.bounds.width_(maxX);
+//						timesView.refresh;
+//						cursorView.refresh;
+//					});
+//					
+					
+					// move or shift
+					if(modifiers.isShift, {
+						sst.shiftItemsLater(time, selectedItem);
+					}, {
+						sst.moveItem(time, selectedItem);
 					});
 					
 					// now check if we can see newX and scroll if needed
@@ -517,17 +527,9 @@ SSTGUI {
 						scrollView.visibleOrigin = (newX - scrollView.bounds.width + 25)@scrollView.visibleOrigin.y;
 					});
 					
-					
-					// move or shift
-					if(modifiers.isShift, {
-						sst.shiftItemsLater(time, selectedItem);
-					}, {
-						sst.moveItem(time, selectedItem);
-					});
-					
 					// recalc durInv as bounds may have changed
-					durInv = sst.lastEventTime.reciprocal;
-					eventsView.refresh;
+					//durInv = sst.lastEventTime.reciprocal;
+					//eventsView.refresh;
 					if(modifiers.isShift, { timesView.refresh; cursorView.refresh; });
 				});
 			});
@@ -554,7 +556,6 @@ SSTGUI {
 					visOriginOnSelected = scrollView.visibleOrigin;
 					selectXOffset = x - visOriginOnSelected.x;
 					selectedStartX = durInv * selectedItem.time * eventsView.bounds.width;
-					selectedTimePerPixel = durInv * eventsView.bounds.width;
 					if(modifiers.isCtrl, {
 						groupDragStartX = x; 
 						groupDragStartY = y;
@@ -565,12 +566,34 @@ SSTGUI {
 			});
 		};
 	}
+	
+	resizeInternalViewsIfNeeded {
+		var lastX;
+		lastX = sst.lastEventTime * durInv * eventsView.bounds.width;
+		// now check if we need to extend and recalc durInv
+		// if we comment this out we get a zooming behaviour with no jumps
+		if(lastX > eventsView.bounds.width, {
+			eventsView.bounds = eventsView.bounds.width_(lastX);
+			cursorView.bounds = eventsView.bounds.width_(lastX);
+			backView.bounds = backView.bounds.width_(lastX); 
+			timesView.bounds = timesView.bounds.width_(lastX);
+			durInv =  sst.lastEventTime.reciprocal;
+			timePerPixel = sst.lastEventTime / eventsView.bounds.width;
+			timesView.refresh;
+			cursorView.refresh;
+		});	
+	}
+		
 
 
 	
 	update { arg changed, what ...args;
 				
 		switch(what,
+			\itemTimes, { 
+				this.resizeInternalViewsIfNeeded;
+				{eventsView.refresh; cursorView.refresh;}.defer;
+			},
 			
 			\time, {
 				{

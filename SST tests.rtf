@@ -30,7 +30,7 @@ t = \cf3 SuperSimpleTimeline\cf0 .new;\
 t.addItem(y = \cf3 SSTItemWrapper\cf0 (1, \{t.clock.beats.postln\}));\
 t.addItem(x = \cf3 SSTItemWrapper\cf0 (2, \{t.clock.beats.postln\}));\
 t.itemAtTime(1);\
-t.shiftItemsLater(5, y)\
+t.shiftItemsLater(8, w)\
 t.play;t.clock.beats.postln;\
 \
 \
@@ -52,6 +52,8 @@ t.createGroup(\\xy, [x, y]);\
 \
 \cf3 SSTGUI\cf0 (t)\
 )\
+\
+t.moveItem(5, w);\
 \
 [w, x, y, z].do(\{|iw| iw.time.postln\})\
 \
