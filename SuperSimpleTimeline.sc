@@ -247,9 +247,6 @@ SSTGUI {
 		labelFont = Font( Font.defaultSansFace, 10 ).boldVariant;
 		labelBounds = IdentityDictionary.new;
 		itemRects = IdentityDictionary.new;
-		//dependees = [sst.addDependant(this), sst.timeReference.addDependant(this)];
-		//sequenceLevels = IdentityDictionary.new;
-//		ca.sequences.do({|sq, i| sequenceLevels[sq] = (0.1 * (i + 1))%1.0});
 	}
 	
 	makeWindow { |origin|
@@ -270,23 +267,6 @@ SSTGUI {
 		scrollView.resize = 2;
 		scrollView.background = Color.clear;
 		scrollView.hasVerticalScroller = false;
-		
-//		sfView = SCSoundFileView.new(scrollView, Rect(0,20, width - 10, 300));
-//		sfView.background = HiliteGradient(Color.blue, Color.cyan, steps: 256);
-//		this.setWaveColors;
-//		sfView.timeCursorOn = true;
-//		sfView.timeCursorColor = Color.red;
-//		sfView.canFocus_(false);
-//		
-//		sfView.mouseDownAction = {|view, x|
-//			var newTime;
-//			newTime = (x / view.bounds.width) * sf.duration;
-//			ca.timeReference.setTime(newTime);
-//		};
-//		
-//		sfView.mouseMoveAction = sfView.mouseDownAction;
-//		sfView.gridOn = false;
-		
 		scrollView.canFocus_(false);
 		
 		backView = CompositeView(scrollView, Rect(0, 20,  width - 10, 300)).background_(Color.clear);
@@ -317,64 +297,6 @@ SSTGUI {
 		window.front;
 		
 		this.makeEventsView;
-
-//		RoundButton(window, 120@20).extrude_(false)
-//			.canFocus_(false)
-//			.font_(Font("Helvetica-Bold", 10))
-//			.states_([["Show Only Selected"], ["Show Only Selected", Color.black, Color.grey]])
-//			.action_({|view|
-//				showOnlySelected = view.value.booleanValue;
-//				this.makeeventsView;
-//			});
-//		RoundButton(window, 120@20)
-//			.extrude_(false)
-//			.canFocus_(false)
-//			.font_(Font("Helvetica-Bold", 10))
-//			.states_([["Add Sequence"]])
-//			.action_({
-//				BMSnapShotSeqConfigGUI(window).onClose = {|results|
-//					var newname;
-//					(results.size > 0).if({
-//						newname = UniqueID.next.asSymbol;
-//						ca.addSequence(newname, time, results);
-//						sequenceLevels[ca.sequences[newname]] = 0.1;
-//						this.makeeventsView;
-//					});
-//				}
-//			});		
-//		addSS = RoundButton(window, 120@20)
-//			.extrude_(false)
-//			.canFocus_(false)
-//			.font_(Font("Helvetica-Bold", 10))
-//			.states_([["Add Snapshot"]])
-//			.action_({
-//				var newname;
-//				if(activeSequence.notNil, {
-//					newname = UniqueID.next.asSymbol;
-//					ca.addSnapShot(activeSequence.name, time, newname);
-//					activeSnapshot = activeSequence.snapshotsDict[newname];
-//					this.makeeventsView;
-//				});
-//			});
-//		remSS = RoundButton(window, 120@20)
-//			.extrude_(false)
-//			.canFocus_(false)
-//			.font_(Font("Helvetica-Bold", 10))
-//			.states_([["Remove Snapshot"]])
-//			.action_({
-//				if(activeSnapshot.notNil && activeSnapshot.isKnown, {
-//					if(activeSequence.snapshots.size > 2, {
-//						activeSequence.removeSnapShot(activeSnapshot.name);
-//						activeSnapshot = activeSequence.snapshots.last;
-//						this.makeeventsView;
-//					}, {
-//						ca.removeSequence(activeSequence);
-//						activeSequence = nil;
-//						this.makeeventsView;
-//						this.drawSelections;
-//					});
-//				});
-//			});
 		
 		window.view.decorator.nextLine.nextLine;
 		window.view.decorator.shift(10, 0);
@@ -442,7 +364,6 @@ SSTGUI {
 			if(thirtySecs >= scrollView.bounds.width, {
 				oneSec = timesView.bounds.width * durInv;
 				Pen.strokeColor = Color.grey(0.8);
-				//Pen.strokeColor = Color.white;
 				sst.lastEventTime.floor.do({|i|
 				var x;
 				if(i%10 != 0, {
@@ -570,6 +491,7 @@ SSTGUI {
 				}, {	// vanilla move or shift
 					inMove = true;
 					// get some info
+					// moving can cause scrolling, so calc distance of x from vis origin
 					lastX = sst.lastEventTime * durInv * eventsView.bounds.width;
 					visRange = Range(scrollView.visibleOrigin.x, scrollView.bounds.width);
 					newX = (x - visRange.start - selectXOffset) + selectedStartX; // could be more than lastX
@@ -626,11 +548,10 @@ SSTGUI {
 				selectedRect = nil;
 				selectedItem = nil;
 				itemRects.keysValuesDo({|item, rect|
-					if(rect.contains((x@y).postln).postln, {selectedRect = rect; selectedItem = item;})
+					if(rect.contains((x@y)), {selectedRect = rect; selectedItem = item;})
 				});
-				selectedRect.postln.notNil.if({
+				selectedRect.notNil.if({
 					visOriginOnSelected = scrollView.visibleOrigin;
-					//selectXOffset = x - (selectedItem.time * durInv * eventsView.bounds.width);
 					selectXOffset = x - visOriginOnSelected.x;
 					selectedStartX = durInv * selectedItem.time * eventsView.bounds.width;
 					selectedTimePerPixel = durInv * eventsView.bounds.width;
@@ -648,26 +569,6 @@ SSTGUI {
 
 	
 	update { arg changed, what ...args;
-		
-		
-//		switch(what,
-//			\times, {
-//				var visRange, selectedX, lastX;
-//				if(inMove, {
-//					visRange = Range(scrollView.visibleOrigin.x, scrollView.bounds.width);
-//					selectedX = selectedItem.time * durInv * eventsView.bounds.width;
-//					if(visRange.includes(selectedX).not, {
-//						scrollView.visibleOrigin = selectedX@scrollView.visibleOrigin.y;
-//					});
-//				});
-//				lastX = sst.lastEventTime * durInv * eventsView.bounds.width;
-//				if(lastX > (eventsView.bounds.width), {
-//					eventsView.bounds = eventsView.bounds.width_(lastX + 300);
-//					backView.bounds = backView.bounds.width_(lastX + 300); 
-//					timesView.bounds = timesView.bounds.width_(lastX + 300);
-//				});
-//			}
-//		)
 				
 		switch(what,
 			
