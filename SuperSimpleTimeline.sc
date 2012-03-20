@@ -459,7 +459,7 @@ SSTGUI {
 			firedItems.copy.keysValuesDo({|firedItem, itemSpecs|
 				var x, rect, alpha;
 				x = durInv * firedItem.time * eventsView.bounds.width;
-				rect = Rect.aboutPoint(x@itemSpecs.groupY, 13, 13);
+				rect = Rect.aboutPoint(x@itemSpecs.groupY, 14, 14);
 				alpha = itemSpecs.alpha;
 				if(alpha == 0, { firedItems[firedItem] = nil; }); // remove if done
 				Pen.fillColor = Color.white.alpha_(alpha);
