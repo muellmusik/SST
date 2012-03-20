@@ -535,19 +535,6 @@ SSTGUI {
 					visRange = Range(scrollView.visibleOrigin.x, scrollView.bounds.width);
 					newX = (x - visRange.start - selectXOffset) + selectedStartX; // could be more than lastX
 					time = newX * timePerPixel;
-					//postf("newX: % newTime: %\n", newX, time);
-					
-//					// now check if we need to extend and recalc durInv
-//					// if we comment this out we get a zooming behaviour with no jumps
-//					if((maxX = max(lastX, newX)) > (eventsView.bounds.width), {
-//						eventsView.bounds = eventsView.bounds.width_(maxX);
-//						cursorView.bounds = eventsView.bounds.width_(maxX);
-//						backView.bounds = backView.bounds.width_(maxX); 
-//						timesView.bounds = timesView.bounds.width_(maxX);
-//						timesView.refresh;
-//						cursorView.refresh;
-//					});
-//					
 					
 					// move or shift
 					if(modifiers.isShift, {
@@ -564,9 +551,6 @@ SSTGUI {
 						scrollView.visibleOrigin = (newX - scrollView.bounds.width + 25)@scrollView.visibleOrigin.y;
 					});
 					
-					// recalc durInv as bounds may have changed
-					//durInv = sst.lastEventTime.reciprocal;
-					//eventsView.refresh;
 					if(modifiers.isShift, { timesView.refresh; cursorView.refresh; });
 				});
 			});
