@@ -1,18 +1,18 @@
 {\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf350
 {\fonttbl\f0\fnil\fcharset0 Monaco;}
-{\colortbl;\red255\green255\blue255;\red191\green0\blue0;\red0\green0\blue191;\red0\green115\blue0;
-\red96\green96\blue96;}
+{\colortbl;\red255\green255\blue255;\red191\green0\blue0;\red0\green0\blue0;\red0\green0\blue191;
+\red0\green115\blue0;\red96\green96\blue96;\red0\green0\blue255;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
 
-\f0\fs18 \cf2 // simple playing\cf0 \
-t = \cf3 SuperSimpleTimeline\cf0 .new;\
-t.addItem(\cf3 SSTItemWrapper\cf0 (1, \{t.clock.beats.postln\}));\
-t.addItem(x = \cf3 SSTItemWrapper\cf0 (5, \{t.clock.beats.postln\}));\
+\f0\fs18 \cf2 // simple playing\cf3 \
+t = \cf4 SuperSimpleTimeline\cf3 .new;\
+t.addItem(\cf4 SSTItemWrapper\cf3 (1, \{t.clock.beats.postln\}));\
+t.addItem(x = \cf4 SSTItemWrapper\cf3 (5, \{t.clock.beats.postln\}));\
 t.play\
 t.play(4)\
 \
 \
-\cf2 // move an item after playback\cf0 \
+\cf2 // move an item after playback\cf3 \
 t.play;t.clock.beats.postln;t.moveItem(3, x);\
 \
 \
@@ -22,63 +22,63 @@ t.inspect\
 \
 t.clock.beats\
 \
-t.clock.sched(1, \{\cf4 \\foo\cf0 .postln\})\
+t.clock.sched(1, \{\cf5 \\foo\cf3 .postln\})\
 \
 \
-\cf2 // shifting items\cf0 \
-t = \cf3 SuperSimpleTimeline\cf0 .new;\
-t.addItem(y = \cf3 SSTItemWrapper\cf0 (1, \{t.clock.beats.postln\}));\
-t.addItem(x = \cf3 SSTItemWrapper\cf0 (2, \{t.clock.beats.postln\}));\
+\cf2 // shifting items\cf3 \
+t = \cf4 SuperSimpleTimeline\cf3 .new;\
+t.addItem(y = \cf4 SSTItemWrapper\cf3 (1, \{t.clock.beats.postln\}));\
+t.addItem(x = \cf4 SSTItemWrapper\cf3 (2, \{t.clock.beats.postln\}));\
 t.itemAtTime(1);\
 t.shiftItemsLater(8, w)\
 t.play;t.clock.beats.postln;\
 \
 \
-\cf2 // Text Wrapper\cf0 \
-t = \cf3 SuperSimpleTimeline\cf0 .new;\
-t.addItem(y = \cf3 SSTItemWrapper\cf0 (1, \{t.clock.beats.postln\}));\
-t.addItem(x = \cf3 SSTTextWrapper\cf0 (2, \cf5 "t.clock.beats.postln"\cf0 ));\
+\cf2 // Text Wrapper\cf3 \
+t = \cf4 SuperSimpleTimeline\cf3 .new;\
+t.addItem(y = \cf4 SSTItemWrapper\cf3 (1, \{t.clock.beats.postln\}));\
+t.addItem(x = \cf4 SSTTextWrapper\cf3 (2, \cf6 "t.clock.beats.postln"\cf3 ));\
 t.play;t.clock.beats.postln;\
 \
 \
-\cf2 // GUI\cf0 \
+\cf2 // GUI\cf3 \
 (\
-t = \cf3 SuperSimpleTimeline\cf0 .new;\
-t.addItem(w = \cf3 SSTItemWrapper\cf0 (0, \{t.clock.beats.postln\}));\
-t.addItem(x = \cf3 SSTItemWrapper\cf0 (1, \{t.clock.beats.postln\}));\
-t.addItem(y = \cf3 SSTItemWrapper\cf0 (4, \{t.clock.beats.postln\}));\
-t.addItem(z = \cf3 SSTItemWrapper\cf0 (12, \{t.clock.beats.postln\}));\
-t.createGroup(\\xy, [x, y]);\
+t = \cf4 SuperSimpleTimeline\cf3 .new;\
+t.addItem(w = \cf4 SSTItemWrapper\cf3 (0, \{t.clock.beats.postln\}));\
+t.addItem(x = \cf4 SSTItemWrapper\cf3 (1, \{t.clock.beats.postln\}));\
+t.addItem(y = \cf4 SSTItemWrapper\cf3 (4, \{t.clock.beats.postln\}));\
+t.addItem(z = \cf4 SSTItemWrapper\cf3 (12, \{t.clock.beats.postln\}));\
+t.createGroup(\cf5 \\xy\cf3 , [x, y]);\
 \
-\cf3 g = SSTGUI\cf0 (t)\
+g = \cf4 SSTGUI\cf3 (t)\
 )\
 \
-t.createGroup(\\z, [z]);\
+t.createGroup(\cf5 \\z\cf3 , [z]);\
 \
 t.createGroup(\\1, []);\
 t.createGroup(\\2, []);\
 \
 t.moveItem(5, w);\
 \
-[w, x, y, z].do(\{|iw| iw.time.postln\})\
+[w, x, y, z].do(\{\cf7 |iw|\cf3  iw.time.postln\})\
 \
 t.play(0) \
 t.stop\
 \
-http://www.colourlovers.com/palette/2066017/False_Security_Bitc\
-g.groupColoursFromHex_(["E6FDE8", "EEF2FE", "FFFDED", "FFF7F2", "F4EFEF"]);\
+http:\cf2 //www.colourlovers.com/palette/2066017/False_Security_Bitc\cf3 \
+g.groupColoursFromHex_([\cf6 "E6FDE8"\cf3 , \cf6 "EEF2FE"\cf3 , \cf6 "FFFDED"\cf3 , \cf6 "FFF7F2"\cf3 , \cf6 "F4EFEF"\cf3 ]);\
 \
-// future kitchen\
-g.groupColoursFromHex_(["#D94A0D", "#FC783F", "#FCF346", "#F4F7CB", "#63C0AA"])\
+\cf2 // future kitchen\cf3 \
+g.groupColoursFromHex_([\cf6 "#D94A0D"\cf3 , \cf6 "#FC783F"\cf3 , \cf6 "#FCF346"\cf3 , \cf6 "#F4F7CB"\cf3 , \cf6 "#63C0AA"\cf3 ])\
 \
-// gia\
-g.groupColoursFromHex_(["#434A80", "#814E71", "#A59E65", "#797663", "#4E6D60"])\
+\cf2 // gia\cf3 \
+g.groupColoursFromHex_([\cf6 "#434A80"\cf3 , \cf6 "#814E71"\cf3 , \cf6 "#A59E65"\cf3 , \cf6 "#797663"\cf3 , \cf6 "#4E6D60"\cf3 ])\
 \
-// arcoiris\
-g.groupColoursFromHex_(["#1D8DAF", "#0FCF1B", "#F51005", "#FDFF08", "#9919D9"])\
+\cf2 // arcoiris\cf3 \
+g.groupColoursFromHex_([\cf6 "#1D8DAF"\cf3 , \cf6 "#0FCF1B"\cf3 , \cf6 "#F51005"\cf3 , \cf6 "#FDFF08"\cf3 , \cf6 "#9919D9"\cf3 ])\
 \
-// santal\
-g.groupColoursFromHex_(["#DADADA", "#F7C090", "#CDEDE8", "#D9C9E8", "#C9DCE8"])\
+\cf2 // santal\cf3 \
+g.groupColoursFromHex_([\cf6 "#DADADA"\cf3 , \cf6 "#F7C090"\cf3 , \cf6 "#CDEDE8"\cf3 , \cf6 "#D9C9E8"\cf3 , \cf6 "#C9DCE8"\cf3 ])\
 \
-// vintage chair\
-g.groupColoursFromHex_(["#1BF6DC", "#16DD72", "#A3DD16", "#FA8936", "#F3ED4F"])}
+\cf2 // vintage chair\cf3 \
+g.groupColoursFromHex_([\cf6 "#1BF6DC"\cf3 , \cf6 "#16DD72"\cf3 , \cf6 "#A3DD16"\cf3 , \cf6 "#FA8936"\cf3 , \cf6 "#F3ED4F"\cf3 ])}
