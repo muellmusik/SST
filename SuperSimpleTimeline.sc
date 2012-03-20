@@ -324,17 +324,17 @@ SSTGUI {
 		
 		window.view.decorator.shift(0, 5);
 		StaticText(window, Rect(0, 0, 5, 10)).string_("-").font_(Font("Helvetica-Bold", 12));
-//		zoomSlider = SmoothSlider(window, Rect(0, 5, 100, 10)).action_({|view| 
-//			var width;
-//			//width = scrollView.bounds.width - 2 + (sf.duration * 160 * ([0.001, 1.001, \exp].asSpec.map(view.value) - 0.001));
-//			// temp fix for userview with large width bug
-//			width = scrollView.bounds.width - 2 + ((32768 - scrollView.bounds.width) * ([0.0, 1.0, \cos].asSpec.map(view.value)));
-//			width = width.round;
-//			eventsView.bounds = Rect(0,0, width, 300);
-//			backView.bounds = Rect(0, 20, width, 300); 
-//			timesView.bounds = Rect(0, 0, width, 20);
-//			scrollView.refresh;
-//		}).knobSize_(1).canFocus_(false).hilightColor_(Color.blue).enabled_(true);
+		zoomSlider = SmoothSlider(window, Rect(0, 5, 100, 10)).action_({|view| 
+			var pixelsPerSecond, newWidth;
+			// pixels per second from whole sequence to 1 second
+			pixelsPerSecond = [(scrollView.bounds.width - 4) * durInv, (scrollView.bounds.width - 4), \cos].asSpec.map(view.value);
+			newWidth = (sst.lastEventTime * pixelsPerSecond).round;
+			backView.bounds = backView.bounds.width_(newWidth);
+			eventsView.bounds = eventsView.bounds.width_(newWidth);
+			cursorView.bounds = cursorView.bounds.width_(newWidth);
+			timesView.bounds = timesView.bounds.width_(newWidth);
+			timePerPixel = sst.lastEventTime / newWidth;
+		}).knobSize_(1).canFocus_(false).hilightColor_(Color.grey).enabled_(true);
 		StaticText(window, Rect(0, 0, 10, 10)).string_("+").font_(Font("Helvetica-Bold", 10));
 		window.view.decorator.shift(0, -5);
 
@@ -595,6 +595,13 @@ SSTGUI {
 		};
 	}
 	
+	recalcZoom {
+		// don't fire action, just get it in the right place
+		zoomSlider.value = [(scrollView.bounds.width - 4) * durInv, (scrollView.bounds.width - 4), \cos]
+			.asSpec
+			.unmap(timePerPixel.reciprocal);
+	}
+	
 	resizeInternalViewsIfNeeded {
 		var lastX;
 		lastX = sst.lastEventTime * durInv * eventsView.bounds.width;
@@ -611,6 +618,7 @@ SSTGUI {
 			timePerPixel = sst.lastEventTime / eventsView.bounds.width;
 			timesView.refresh;
 			cursorView.refresh;
+			this.recalcZoom;
 		});	
 	}
 		
