@@ -50,12 +50,35 @@ t.addItem(y = \cf3 SSTItemWrapper\cf0 (4, \{t.clock.beats.postln\}));\
 t.addItem(z = \cf3 SSTItemWrapper\cf0 (12, \{t.clock.beats.postln\}));\
 t.createGroup(\\xy, [x, y]);\
 \
-\cf3 SSTGUI\cf0 (t)\
+\cf3 g = SSTGUI\cf0 (t)\
 )\
+\
+t.createGroup(\\z, [z]);\
+\
+t.createGroup(\\1, []);\
+t.createGroup(\\2, []);\
 \
 t.moveItem(5, w);\
 \
 [w, x, y, z].do(\{|iw| iw.time.postln\})\
 \
 t.play(0) \
-t.stop}
+t.stop\
+\
+http://www.colourlovers.com/palette/2066017/False_Security_Bitc\
+g.groupColoursFromHex_(["E6FDE8", "EEF2FE", "FFFDED", "FFF7F2", "F4EFEF"]);\
+\
+// future kitchen\
+g.groupColoursFromHex_(["#D94A0D", "#FC783F", "#FCF346", "#F4F7CB", "#63C0AA"])\
+\
+// gia\
+g.groupColoursFromHex_(["#434A80", "#814E71", "#A59E65", "#797663", "#4E6D60"])\
+\
+// arcoiris\
+g.groupColoursFromHex_(["#1D8DAF", "#0FCF1B", "#F51005", "#FDFF08", "#9919D9"])\
+\
+// santal\
+g.groupColoursFromHex_(["#DADADA", "#F7C090", "#CDEDE8", "#D9C9E8", "#C9DCE8"])\
+\
+// vintage chair\
+g.groupColoursFromHex_(["#1BF6DC", "#16DD72", "#A3DD16", "#FA8936", "#F3ED4F"])}

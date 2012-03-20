@@ -118,7 +118,8 @@ SuperSimpleTimeline {
 		}, {
 			groupOrder.add(groupName); // if new add last
 		 	groups[groupName] = SSTGroup(groupName, groupItems, groupOrder.indexOf(groupName));
-		 }); 
+		}); 
+		this.changed(\groupAdded, groupName);
 	} // very simple for now
 	
 	orderGroup {|groupName, index|
@@ -136,6 +137,7 @@ SuperSimpleTimeline {
 		groups[groupName] = nil;
 		groupOrder.remove(groupName);
 		this.resetGroupOrders;
+		this.changed(\groupRemoved, groupName);
 	}
 	
 	addSection {|sectionName, time| } // is this also a kind of event? Probably yes!
@@ -233,12 +235,14 @@ SSTGUI {
 	var zoomSlider, labelFont, labelBounds;
 	var inMove = false, groupDragItem, groupDragRect, groupDraggedTo, groupDragStartX, groupDragStartY;
 	var firedItems, firedEnv, fadeDur = 0.3;
+	var <groupColours, colorStream;
 	
 	*new {|sst, name, origin|
 		^super.new.init(sst, name ? "SuperSimpleTimeline").makeWindow(origin ? (200@200));
 	}
 	
 	init {|argSST, argName|
+		var hexColours;
 		sst = argSST;
 		name = argName;
 		dependees = [sst.addDependant(this)]; // sst is the time ref
@@ -247,6 +251,39 @@ SSTGUI {
 		labelFont = Font( Font.defaultSansFace, 10 ).boldVariant;
 		labelBounds = IdentityDictionary.new;
 		itemRects = IdentityDictionary.new;
+		groupColours = IdentityDictionary.new; 
+		/*
+			http://www.colourlovers.com/palette/2066112/purplexed#
+			Author: Artsplay http://www.colourlovers.com/lover/artsplay/loveNote
+		*/
+		//hexColours = ["#DD9D25", "#C9C748", "#8B1A92", "#DDB137", "#D8D649"];
+		/*
+			http://www.colourlovers.com/palette/2066046/MH_Palette
+			Author: SpotlightNC http://www.colourlovers.com/lover/SpotlightNC/loveNote
+		*/
+		hexColours = ["#FF7A17", "#FF1C59", "#FFC424", "#A132CF", "#13945F"];
+		colorStream = Pseq(hexColours.collect({|hex|
+			Color.fromHexString(hex);
+		}), inf).asStream;
+		sst.groupOrder.do({|grpname|
+			groupColours[grpname] = colorStream.next;
+		});
+	}
+	
+	groupColours_ { |coloursArray|
+		colorStream = Pseq(coloursArray, inf).asStream;
+		sst.groupOrder.do({|grpname|
+			groupColours[grpname] = colorStream.next;
+		});
+		eventsView.refresh;
+	}
+	
+	groupColoursFromHex_ {|hexArray|
+		colorStream = Pseq(hexArray.collect({|hex| Color.fromHexString(hex);}), inf).asStream;
+		sst.groupOrder.do({|grpname|
+			groupColours[grpname] = colorStream.next;
+		});
+		eventsView.refresh;
 	}
 	
 	makeWindow { |origin|
@@ -462,7 +499,7 @@ SSTGUI {
 				});
 				
 				// draw events
-				Pen.fillColor = Color.rand;
+				Pen.fillColor = groupColours[name];
 				sst.groups[name].items.reverseDo({|item| // draw earlier items on top
 					var x, rect;
 					x = durInv * item.time * eventsView.bounds.width;
@@ -632,7 +669,17 @@ SSTGUI {
 					});
 					firedItems[itemFired] = nil;
 				}.fork(AppClock);
-			} 
+			},
+			
+			\groupAdded, {
+				groupColours[args[0]] = colorStream.next;
+				eventsView.refresh;
+			},
+			
+			\groupRemoved, {
+				groupColours[args[0]] = nil;
+			}
+			
 		);
 		
 //			\stop, {
