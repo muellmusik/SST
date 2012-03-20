@@ -306,7 +306,7 @@ SSTGUI {
 		scrollView.hasVerticalScroller = false;
 		scrollView.canFocus_(false);
 		
-		backView = CompositeView(scrollView, Rect(0, 20,  width - 10, 300)).background_(Color.clear);
+		backView = CompositeView(scrollView, Rect(0, 20,  width - 10, 294)).background_(Color.clear);
 		
 		this.makeTimesView;
 		
@@ -609,7 +609,9 @@ SSTGUI {
 		lastX = sst.lastEventTime * durInv * eventsView.bounds.width;
 		// now check if we need to extend and recalc durInv
 		// if we comment this out we get a zooming behaviour with no jumps
-		if(lastX > eventsView.bounds.width, {
+		if(lastX != eventsView.bounds.width, {
+			lastX = max(scrollView.bounds.width - 4, lastX);
+			backView.bounds = backView.bounds.width_(lastX);
 			eventsView.bounds = eventsView.bounds.width_(lastX);
 			cursorView.bounds = eventsView.bounds.width_(lastX);
 			backView.bounds = backView.bounds.width_(lastX); 
