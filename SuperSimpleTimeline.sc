@@ -14,6 +14,7 @@ SuperSimpleTimeline {
 	var <groups, <groupOrder;
 	var <timeUpdate = 0.04;
 	var <playing = false;
+	var <pauseTime = 0;
 
 	*new {|clock| ^super.new.init(clock); }
 	
@@ -52,11 +53,15 @@ SuperSimpleTimeline {
 		});
 	}
 	
-	stop { playing = false; queue = nil; }
+	pause { pauseTime = this.currentTime; playing = false; queue = nil; }
+	
+	togglePlay { if(playing, { this.pause }, { this.play(pauseTime) }); }
+	
+	stop { playing = false; queue = nil; pauseTime = 0; }
 	
 	startTimeUpdate {
 		clock.sched(0, { 
-			this.changed(\time, clock.beats - clockStart + playOffset);
+			this.changed(\time, this.currentTime);
 			if(playing, timeUpdate, nil);
 		})
 	}
@@ -144,7 +149,7 @@ SuperSimpleTimeline {
 	
 	lastEventTime { ^if(items.size > 0, {items.last.time}, {0}); } // more meaningful than duration
 	
-	currentTime { ^if(playing, {clock.beats - clockStart}, { 0 }) } // refine later
+	currentTime { ^if(playing, {clock.beats - clockStart + playOffset}, { pauseTime }) } // refine later
 	
 }
 
@@ -294,10 +299,10 @@ SSTGUI {
 		window = Window.new(name, Rect(origin.x, origin.y, width, 400), false);
 		window.view.decorator = FlowLayout(window.view.bounds);
 		
-//		window.view.keyDownAction = { arg view,char,modifiers,unicode,keycode;
-//			if(unicode == 32, {ca.timeReference.togglePlay});
-//			if(unicode == 13, {ca.timeReference.stop});
-//		};
+		window.view.keyDownAction = { arg view,char,modifiers,unicode,keycode;
+			if(unicode == 32, {sst.togglePlay});
+			if(unicode == 13, {sst.stop});
+		};
 		
 		scrollView = ScrollView(window, Rect(0, 0, width - 8, 334));
 		scrollView.hasBorder = true;
