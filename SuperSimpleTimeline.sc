@@ -57,7 +57,7 @@ SuperSimpleTimeline {
 	
 	togglePlay { if(playing, { this.pause }, { this.play(pauseTime) }); }
 	
-	stop { playing = false; queue = nil; pauseTime = 0; }
+	stop { playing = false; queue = nil; pauseTime = 0; this.changed(\time, 0) }
 	
 	startTimeUpdate {
 		clock.sched(0, { 
@@ -149,7 +149,9 @@ SuperSimpleTimeline {
 	
 	lastEventTime { ^if(items.size > 0, {items.last.time}, {0}); } // more meaningful than duration
 	
-	currentTime { ^if(playing, {clock.beats - clockStart + playOffset}, { pauseTime }) } // refine later
+	currentTime { ^if(playing, {clock.beats - clockStart + playOffset}, { pauseTime }) }
+	
+	currentTime_ {|time| if(playing, {this.play(time)}, { pauseTime = time }); this.changed(\time, time) }
 	
 }
 
@@ -425,8 +427,8 @@ SSTGUI {
 			Pen.lineDash_(FloatArray[1.0, 0.0]);
 		};
 		
-//		timesView.mouseDownAction = sfView.mouseDownAction;
-//		timesView.mouseMoveAction = sfView.mouseDownAction;
+		timesView.mouseDownAction = {|view, x, y| sst.currentTime = x * timePerPixel; };
+		timesView.mouseMoveAction = timesView.mouseDownAction;
 	}
 	
 	makeEventsView {
