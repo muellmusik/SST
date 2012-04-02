@@ -192,7 +192,7 @@ SSTItemWrapper {
 	group_ {|newGroup| group !? {|oldGroup| oldGroup.removeItem(this)}; group = newGroup }
 	
 	// a (probably) editable view which can pop up on the timeline
-	gui { }
+	gui { ^nil }
 	
 	// initialisation code for things like buffers and defs
 	resourceCode { }
@@ -206,21 +206,17 @@ SSTItemWrapper {
 }
 
 // text to be evaluated
-SSTTextWrapper {
-	var <>time;
+SSTTextWrapper : SSTItemWrapper {
 	var <text;
-	var <>wrapped; // the thing that's executed
-	var <resources; // a collection of buffers, etc.
 	
 	// text must be properly escaped if you supply a String literal
-	*new {|time, text| ^super.newCopyArgs(time, text).compileText; }
+	*new {|time, text| ^super.new(time, nil).text_(text) }
 	
 	compileText { wrapped = text.compile }
 	
 	text_ {|newText| text = newText; this.compileText; }
 	
-	// a (probably) editable view which can pop up on the timeline
-	gui { }
+	gui {|parent, origin, name| ^SSTTextWrapperGUI(this, parent, origin, name) }
 	
 	// initialisation code for things like buffers and defs
 	resourceCode { }
@@ -243,6 +239,7 @@ SSTGUI {
 	var inMove = false, groupDragItem, groupDragRect, groupDraggedTo, groupDragStartX, groupDragStartY;
 	var firedItems, firedEnv, fadeDur = 0.3;
 	var <groupColours, colorStream;
+	var <eventGUIs;
 	
 	*new {|sst, name, origin|
 		^super.new.init(sst, name ? "SuperSimpleTimeline").makeWindow(origin ? (200@200));
@@ -275,6 +272,7 @@ SSTGUI {
 		sst.groupOrder.do({|grpname|
 			groupColours[grpname] = colorStream.next;
 		});
+		eventGUIs = IdentityDictionary.new;
 	}
 	
 	groupColours_ { |coloursArray|
@@ -324,7 +322,7 @@ SSTGUI {
 		
 		window.view.decorator.shift(0, 5);
 		StaticText(window, Rect(0, 0, 5, 10)).string_("-").font_(Font("Helvetica-Bold", 12));
-		zoomSlider = SmoothSlider(window, Rect(0, 5, 100, 10)).action_({|view| 
+		zoomSlider = Slider(window, Rect(0, 5, 100, 10)).action_({|view| 
 			var pixelsPerSecond, newWidth;
 			// pixels per second from whole sequence to 1 second
 			pixelsPerSecond = [(scrollView.bounds.width - 4) * durInv, (scrollView.bounds.width - 4), \cos].asSpec.map(view.value);
@@ -334,7 +332,7 @@ SSTGUI {
 			cursorView.bounds = cursorView.bounds.width_(newWidth);
 			timesView.bounds = timesView.bounds.width_(newWidth);
 			timePerPixel = sst.lastEventTime / newWidth;
-		}).knobSize_(1).canFocus_(false).hilightColor_(Color.grey).enabled_(true);
+		}).canFocus_(false).enabled_(true);
 		StaticText(window, Rect(0, 0, 10, 10)).string_("+").font_(Font("Helvetica-Bold", 10));
 		window.view.decorator.shift(0, -5);
 
@@ -574,12 +572,15 @@ SSTGUI {
 		};
 
 		eventsView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
+			// find selected event
+			selectedRect = nil;
+			selectedItem = nil;
+			itemRects.keysValuesDo({|item, rect|
+				if(rect.contains((x@y)), {selectedRect = rect; selectedItem = item;})
+			});
+			
+			// single (maybe drag) or double (open event gui) click
 			if(clickCount < 2, {
-				selectedRect = nil;
-				selectedItem = nil;
-				itemRects.keysValuesDo({|item, rect|
-					if(rect.contains((x@y)), {selectedRect = rect; selectedItem = item;})
-				});
 				selectedRect.notNil.if({
 					visOriginOnSelected = scrollView.visibleOrigin;
 					selectXOffset = x - visOriginOnSelected.x;
@@ -589,6 +590,17 @@ SSTGUI {
 						groupDragStartY = y;
 						groupDragItem = selectedItem;
 						groupDragRect = selectedRect;
+					});
+				});
+			}, {
+				selectedItem.notNil.if({
+					var thisGUI;
+					thisGUI = eventGUIs[selectedItem]; 
+					if(thisGUI.notNil, { thisGUI.front }, { 
+						eventGUIs[selectedItem] = thisGUI = selectedItem.gui;
+						thisGUI.notNil.if({
+							thisGUI.onClose = { eventGUIs[selectedItem] = nil };
+						});
 					});
 				});
 			});
@@ -714,4 +726,5 @@ SSTGUI {
 //	
 	}
 }
+
 	
