@@ -599,7 +599,11 @@ SSTGUI {
 					if(thisGUI.notNil, { thisGUI.front }, { 
 						eventGUIs[selectedItem] = thisGUI = selectedItem.gui;
 						thisGUI.notNil.if({
-							thisGUI.onClose = { eventGUIs[selectedItem] = nil };
+							sst.addDependant(thisGUI);
+							thisGUI.onClose = { 
+								eventGUIs[selectedItem] = nil;
+								sst.removeDependant(thisGUI);
+							};
 						});
 					});
 				});
