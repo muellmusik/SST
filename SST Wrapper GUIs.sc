@@ -104,3 +104,90 @@ SSTTextWrapperGUI : AbstractSSTWrapperGUI {
 		}.fork(AppClock);	
 	}
 }
+
+SSTEnvelopedBufferWrapperGUI : AbstractSSTWrapperGUI {
+	var textView, envView, cancelButton, applyButton, sf;
+	
+	makeViews {
+		parent.isNil.if({
+			parent = Window(name, Rect(origin.x, origin.y, 600, 500)).front.view;
+		});
+		parent.findWindow.layout = VLayout(
+			textView = TextView().stringColor = Color.black,
+			this.makeEnvView,
+			HLayout(nil, 
+				[cancelButton = Button().states_([["Cancel"]]), align:\right], 
+				[applyButton = Button().states_([["Apply"]]), align:\right]
+			)
+		);
+		parent.findWindow.bounds = Rect(origin.x, origin.y, 600, 500);
+		parent.findWindow.onClose = parent.findWindow.onClose.addFunc({onClose.value});
+		textView.font = Font(Font.defaultMonoFace, 12);
+		textView.string = wrapper.eventCode;
+		cancelButton.action = { 
+			textView.string = wrapper.eventCode;
+			envView.setEnv(wrapper.env);
+		};
+		applyButton.action = { 
+			var vals;
+			vals = envView.value;
+			wrapper.eventCode = textView.string; 
+			wrapper.env = Env(vals[1], (vals[0] * sf.duration).differentiate.copyToEnd(1));
+		};
+	}
+	
+	makeEnvView {
+		var compView, sfCompView, sfView;
+		compView = CompositeView.new(parent);
+		compView.layout = StackLayout(
+			envView = EnvelopeView(compView).setEnv(wrapper.env),
+			sfCompView = CompositeView.new(compView);
+		).mode_(\stackAll);
+		
+		envView.background_(Color.white.alpha_(0));
+		envView.keepHorizontalOrder = true;
+		// keep first and last nodes at boundaries
+		envView.mouseUpAction = {
+			var values = envView.value;
+			if(values[0].first != 0.0, {
+				values[0][0] = 0.0;
+				envView.value = values;
+				envView.refresh;
+			});
+			if(values[0].last != 1.0, {
+				values[0][values[0].size - 1] = 1.0;
+				envView.value = values;
+			});
+		};
+		envView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
+			if(clickCount == 2, {
+				var values;
+				values = view.value.flop;
+				values = values.add([(x - 5) / (view.bounds.width - 10), 1.0 - ((y - 5) / (view.bounds.height - 10))]);
+				envView.value = values.sort({|a, b| a[0] <= b[0] }).flop;
+			});
+		};
+		
+		sfCompView.layout = HLayout(
+		sfView = SoundFileView(sfCompView, sfCompView.bounds.insetBy(5, 5)).background_(Color.white)).margins_(10 ! 4);
+		sf = SoundFile.new;
+		sf.openRead(wrapper.wrapped.path);
+		sfView.readFile(sf, 0, sf.numFrames, 64, true);
+		^compView
+	}
+	
+	itemFired {
+		{
+			var fadeTime = 0, fadeDur = 0.3, interval = 0.04;
+			var firedEnv = Env([0, 1], [fadeDur], \sine);
+			var oldbackColor = textView.background;
+			var oldStringColor = textView.stringColor;
+			while({fadeTime <= fadeDur }, {
+				textView.background = Color.black.blend(oldbackColor, firedEnv.at(fadeTime));
+				textView.stringColor = Color.white.blend(oldStringColor, firedEnv.at(fadeTime));
+				fadeTime = fadeTime + interval;
+				interval.wait;
+			});
+		}.fork(AppClock);	
+	}
+}

@@ -83,4 +83,12 @@ g.groupColoursFromHex_([\cf5 "#1D8DAF"\cf0 , \cf5 "#0FCF1B"\cf0 , \cf5 "#F51005"
 g.groupColoursFromHex_([\cf5 "#DADADA"\cf0 , \cf5 "#F7C090"\cf0 , \cf5 "#CDEDE8"\cf0 , \cf5 "#D9C9E8"\cf0 , \cf5 "#C9DCE8"\cf0 ])\
 \
 \cf2 // vintage chair\cf0 \
-g.groupColoursFromHex_([\cf5 "#1BF6DC"\cf0 , \cf5 "#16DD72"\cf0 , \cf5 "#A3DD16"\cf0 , \cf5 "#FA8936"\cf0 , \cf5 "#F3ED4F"\cf0 ])}
+g.groupColoursFromHex_([\cf5 "#1BF6DC"\cf0 , \cf5 "#16DD72"\cf0 , \cf5 "#A3DD16"\cf0 , \cf5 "#FA8936"\cf0 , \cf5 "#F3ED4F"\cf0 ])\
+\
+\
+//// Buffer\
+s.boot;\
+p = Platform.resourceDir +/+ "sounds/a11wlk01.wav";\
+b = Buffer.read(s, p);\
+\cf3 g = SSTEnvelopedBufferWrapper(0, b);\
+h = g.gui}

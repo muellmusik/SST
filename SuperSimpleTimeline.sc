@@ -228,6 +228,43 @@ SSTTextWrapper : SSTItemWrapper {
 	
 }
 
+// play a soundfile from a Buffer
+SSTEnvelopedBufferWrapper : SSTItemWrapper {
+	var <>eventCode, <env, defName;
+	
+	*new {|time, buffer| ^super.new(time, buffer).init }
+	
+	init {
+		env = Env([1, 1], [wrapped.duration]);
+		defName = "SST-" ++ this.identityHash;
+		this.addDef;
+		eventCode = "Synth(" ++ defName.asCompileString ++ ", [out: 0, rate: 1, mul: 1], target: " ++ wrapped.server.asCompileString ++ ");";
+	}
+	
+	addDef {
+		SynthDef(defName, {|out, rate, mul|
+			var output;
+			output = PlayBuf.ar(wrapped.numChannels, wrapped, rate);
+			output = output * EnvGen.ar(env, timeScale: rate.reciprocal, levelScale: mul, doneAction: 2);
+			Out.ar(out, output);
+		}).add;
+	}
+	
+	env_{|newEnv| env = newEnv; this.addDef }
+	
+	gui {|parent, origin, name| ^SSTEnvelopedBufferWrapperGUI(this, parent, origin, name) }
+	
+	// initialisation code for things like buffers and defs
+	resourceCode { }
+	
+	// the code which causes the actual event
+	//eventCode {  }
+	
+	//execute the event
+	value { eventCode.interpret }
+	
+}
+
 SSTGUI {
 	var sst, eventsView, cursorView, window, name, onClose;
 	var path, sf, durInv, sfView, scrollView, selectView, backView, timesView;
