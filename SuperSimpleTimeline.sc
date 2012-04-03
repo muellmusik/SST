@@ -191,8 +191,7 @@ SSTItemWrapper {
 	
 	group_ {|newGroup| group !? {|oldGroup| oldGroup.removeItem(this)}; group = newGroup }
 	
-	// a (probably) editable view which can pop up on the timeline
-	gui { ^nil }
+	gui {|parent, origin, name| ^SSTItemWrapperGUI(this, parent, origin, name) }
 	
 	// initialisation code for things like buffers and defs
 	resourceCode { }
