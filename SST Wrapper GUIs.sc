@@ -180,7 +180,7 @@ SSTEnvelopedBufferWrapperGUI : AbstractSSTWrapperGUI {
 		sfView.readFile(sf, 0, sf.numFrames, 64, true);
 		sfView.timeCursorOn = true;
 		
-		oscFunc = OSCFunc({|msg| {sfView.timeCursorPosition = msg[3]}.defer; }, '/tr', argTemplate: [nil, wrapper.id, nil]);
+		oscFunc = OSCFunc({|msg| {sfView.timeCursorPosition = msg[3]}.defer; }, '/tr', argTemplate: [nil, wrapper.id, nil]).fix;
 		onClose = onClose.addFunc({oscFunc.free});
 		^compView
 	}
