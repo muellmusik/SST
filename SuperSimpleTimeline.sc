@@ -236,8 +236,8 @@ SSTEnvelopedBufferWrapper : SSTItemWrapper {
 	
 	init {
 		env = Env([1, 1], [wrapped.duration]);
-		defName = "SST-" ++ this.identityHash;
 		id = (this.identityHash%(2.pow(16))).asInteger;
+		defName = "SST-" ++ id;
 		this.addDef;
 		eventCode = "Synth(" ++ defName.asCompileString ++ ", [out: 0, rate: 1, mul: 1], target: " ++ wrapped.server.asCompileString ++ ");";
 	}
