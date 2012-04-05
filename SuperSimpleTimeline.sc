@@ -156,7 +156,7 @@ SuperSimpleTimeline {
 }
 
 SSTGroup {
-	var <name, <items, <>order;
+	var <name, <items, <>order, <>color;
 	
 	*new {|name, items, order| 
 		items = SortedList(items.size, {|a, b| a.time <= b.time}).addAll(items);
@@ -274,8 +274,9 @@ SSTGUI {
 	var zoomSlider, labelFont, labelBounds;
 	var inMove = false, groupDragItem, groupDragRect, groupDraggedTo, groupDragStartX, groupDragStartY;
 	var firedItems, firedEnv, fadeDur = 0.3;
-	var <groupColours, colorStream;
+	var colorStream;
 	var <eventGUIs;
+	var groups;
 	
 	*new {|sst, name, origin|
 		^super.new.init(sst, name ? "SuperSimpleTimeline").makeWindow(origin ? (200@200));
@@ -286,12 +287,12 @@ SSTGUI {
 		sst = argSST;
 		name = argName;
 		dependees = [sst.addDependant(this)]; // sst is the time ref
+		groups = sst.groups; // hold a reference to the sst's group dict
 		firedItems = IdentityDictionary.new;
 		firedEnv = Env([1, 0], [fadeDur], \sine);
 		labelFont = Font( Font.defaultSansFace, 10 ).boldVariant;
 		labelBounds = IdentityDictionary.new;
 		itemRects = IdentityDictionary.new;
-		groupColours = IdentityDictionary.new; 
 		/*
 			http://www.colourlovers.com/palette/2066112/purplexed#
 			Author: Artsplay http://www.colourlovers.com/lover/artsplay/loveNote
@@ -306,7 +307,7 @@ SSTGUI {
 			Color.fromHexString(hex);
 		}), inf).asStream;
 		sst.groupOrder.do({|grpname|
-			groupColours[grpname] = colorStream.next;
+			groups[grpname].color = colorStream.next;
 		});
 		eventGUIs = IdentityDictionary.new;
 	}
@@ -314,7 +315,7 @@ SSTGUI {
 	groupColours_ { |coloursArray|
 		colorStream = Pseq(coloursArray, inf).asStream;
 		sst.groupOrder.do({|grpname|
-			groupColours[grpname] = colorStream.next;
+			groups[grpname].color = colorStream.next;
 		});
 		eventsView.refresh;
 	}
@@ -322,7 +323,7 @@ SSTGUI {
 	groupColoursFromHex_ {|hexArray|
 		colorStream = Pseq(hexArray.collect({|hex| Color.fromHexString(hex);}), inf).asStream;
 		sst.groupOrder.do({|grpname|
-			groupColours[grpname] = colorStream.next;
+			groups[grpname].color = colorStream.next;
 		});
 		eventsView.refresh;
 	}
@@ -540,7 +541,7 @@ SSTGUI {
 				});
 				
 				// draw events
-				Pen.fillColor = groupColours[name];
+				Pen.fillColor = groups[name].color;
 				sst.groups[name].items.reverseDo({|item| // draw earlier items on top
 					var x, rect;
 					x = durInv * item.time * eventsView.bounds.width;
@@ -725,12 +726,12 @@ SSTGUI {
 			},
 			
 			\groupAdded, {
-				groupColours[args[0]] = colorStream.next;
+				groups[args[0]].color = colorStream.next;
 				eventsView.refresh;
 			},
 			
 			\groupRemoved, {
-				groupColours[args[0]] = nil;
+				
 			}
 			
 		);

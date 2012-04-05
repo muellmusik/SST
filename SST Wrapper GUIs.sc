@@ -57,8 +57,10 @@ SSTItemWrapperGUI : AbstractSSTWrapperGUI {
 			var firedEnv = Env([0, 1], [fadeDur], \sine);
 			var oldbackColor = textView.background;
 			var oldStringColor = textView.stringColor;
+			var fadeBackColor;
+			fadeBackColor = wrapper.group.notNil.if({ wrapper.group.color }, Color.black);
 			while({fadeTime <= fadeDur }, {
-				textView.background = Color.black.blend(oldbackColor, firedEnv.at(fadeTime));
+				textView.background = fadeBackColor.blend(oldbackColor, firedEnv.at(fadeTime));
 				textView.stringColor = Color.white.blend(oldStringColor, firedEnv.at(fadeTime));
 				fadeTime = fadeTime + interval;
 				interval.wait;
@@ -95,8 +97,10 @@ SSTTextWrapperGUI : AbstractSSTWrapperGUI {
 			var firedEnv = Env([0, 1], [fadeDur], \sine);
 			var oldbackColor = textView.background;
 			var oldStringColor = textView.stringColor;
+			var fadeBackColor;
+			fadeBackColor = wrapper.group.notNil.if({ wrapper.group.color }, Color.black);
 			while({fadeTime <= fadeDur }, {
-				textView.background = Color.black.blend(oldbackColor, firedEnv.at(fadeTime));
+				textView.background = fadeBackColor.blend(oldbackColor, firedEnv.at(fadeTime));
 				textView.stringColor = Color.white.blend(oldStringColor, firedEnv.at(fadeTime));
 				fadeTime = fadeTime + interval;
 				interval.wait;
@@ -106,7 +110,7 @@ SSTTextWrapperGUI : AbstractSSTWrapperGUI {
 }
 
 SSTEnvelopedBufferWrapperGUI : AbstractSSTWrapperGUI {
-	var textView, envView, cancelButton, applyButton, sf;
+	var textView, <envView, cancelButton, applyButton, sf;
 	
 	makeViews {
 		parent.isNil.if({
@@ -170,6 +174,7 @@ SSTEnvelopedBufferWrapperGUI : AbstractSSTWrapperGUI {
 		
 		sfCompView.layout = HLayout(
 		sfView = SoundFileView(sfCompView, sfCompView.bounds.insetBy(5, 5)).background_(Color.white)).margins_(10 ! 4);
+		wrapper.group.notNil.if({ sfView.waveColors = [wrapper.group.color] });
 		sf = SoundFile.new;
 		sf.openRead(wrapper.wrapped.path);
 		sfView.readFile(sf, 0, sf.numFrames, 64, true);
@@ -182,8 +187,10 @@ SSTEnvelopedBufferWrapperGUI : AbstractSSTWrapperGUI {
 			var firedEnv = Env([0, 1], [fadeDur], \sine);
 			var oldbackColor = textView.background;
 			var oldStringColor = textView.stringColor;
+			var fadeBackColor;
+			fadeBackColor = wrapper.group.notNil.if({ wrapper.group.color }, Color.black);
 			while({fadeTime <= fadeDur }, {
-				textView.background = Color.black.blend(oldbackColor, firedEnv.at(fadeTime));
+				textView.background = fadeBackColor.blend(oldbackColor, firedEnv.at(fadeTime));
 				textView.stringColor = Color.white.blend(oldStringColor, firedEnv.at(fadeTime));
 				fadeTime = fadeTime + interval;
 				interval.wait;
