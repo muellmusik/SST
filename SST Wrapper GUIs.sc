@@ -30,7 +30,7 @@ AbstractSSTWrapperGUI {
 
 // basic version just posts item asCompileString; may not be editable
 SSTItemWrapperGUI : AbstractSSTWrapperGUI {
-	var textView, cancelButton, applyButton;
+	var textView, resetButton, applyButton;
 	
 	makeViews {
 		parent.isNil.if({
@@ -39,7 +39,7 @@ SSTItemWrapperGUI : AbstractSSTWrapperGUI {
 		parent.findWindow.layout = VLayout(
 			textView = TextView().stringColor = Color.black,
 			HLayout(nil, 
-				[cancelButton = Button().states_([["Cancel"]]), align:\right], 
+				[resetButton = Button().states_([["Reset"]]), align:\right], 
 				[applyButton = Button().states_([["Apply"]]), align:\right]
 			)
 		);
@@ -47,7 +47,7 @@ SSTItemWrapperGUI : AbstractSSTWrapperGUI {
 		parent.findWindow.onClose = parent.findWindow.onClose.addFunc({onClose.value});
 		textView.font = Font(Font.defaultMonoFace, 12);
 		textView.string = wrapper.wrapped.asCompileString;
-		cancelButton.action = { textView.string = wrapper.wrapped.asCompileString; };
+		resetButton.action = { textView.string = wrapper.wrapped.asCompileString; };
 		applyButton.action = { wrapper.wrapped = textView.string.interpret; };
 	}
 	
@@ -70,7 +70,7 @@ SSTItemWrapperGUI : AbstractSSTWrapperGUI {
 }
 
 SSTTextWrapperGUI : AbstractSSTWrapperGUI {
-	var textView, cancelButton, applyButton;
+	var textView, resetButton, applyButton;
 	
 	makeViews {
 		parent.isNil.if({
@@ -79,7 +79,7 @@ SSTTextWrapperGUI : AbstractSSTWrapperGUI {
 		parent.findWindow.layout = VLayout(
 			textView = TextView().stringColor = Color.black,
 			HLayout(nil, 
-				[cancelButton = Button().states_([["Cancel"]]), align:\right], 
+				[resetButton = Button().states_([["Reset"]]), align:\right], 
 				[applyButton = Button().states_([["Apply"]]), align:\right]
 			)
 		);
@@ -87,7 +87,7 @@ SSTTextWrapperGUI : AbstractSSTWrapperGUI {
 		parent.findWindow.onClose = parent.findWindow.onClose.addFunc({onClose.value});
 		textView.font = Font(Font.defaultMonoFace, 12);
 		textView.string = wrapper.text;
-		cancelButton.action = { textView.string = wrapper.text; };
+		resetButton.action = { textView.string = wrapper.text; };
 		applyButton.action = { wrapper.text = textView.string; };
 	}
 	
@@ -110,7 +110,7 @@ SSTTextWrapperGUI : AbstractSSTWrapperGUI {
 }
 
 SSTEnvelopedBufferWrapperGUI : AbstractSSTWrapperGUI {
-	var textView, <envView, cancelButton, applyButton, sf;
+	var textView, <envView, resetButton, applyButton, sf;
 	
 	makeViews {
 		parent.isNil.if({
@@ -120,7 +120,7 @@ SSTEnvelopedBufferWrapperGUI : AbstractSSTWrapperGUI {
 			textView = TextView().stringColor = Color.black,
 			this.makeEnvView,
 			HLayout(nil, 
-				[cancelButton = Button().states_([["Cancel"]]), align:\right], 
+				[resetButton = Button().states_([["Reset"]]), align:\right], 
 				[applyButton = Button().states_([["Apply"]]), align:\right]
 			)
 		);
@@ -128,7 +128,7 @@ SSTEnvelopedBufferWrapperGUI : AbstractSSTWrapperGUI {
 		parent.findWindow.onClose = parent.findWindow.onClose.addFunc({onClose.value});
 		textView.font = Font(Font.defaultMonoFace, 12);
 		textView.string = wrapper.eventCode;
-		cancelButton.action = { 
+		resetButton.action = { 
 			textView.string = wrapper.eventCode;
 			envView.setEnv(wrapper.env);
 		};
