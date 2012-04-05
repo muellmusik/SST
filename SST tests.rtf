@@ -85,10 +85,22 @@ g.groupColoursFromHex_([\cf5 "#DADADA"\cf0 , \cf5 "#F7C090"\cf0 , \cf5 "#CDEDE8"
 \cf2 // vintage chair\cf0 \
 g.groupColoursFromHex_([\cf5 "#1BF6DC"\cf0 , \cf5 "#16DD72"\cf0 , \cf5 "#A3DD16"\cf0 , \cf5 "#FA8936"\cf0 , \cf5 "#F3ED4F"\cf0 ])\
 \
+// two items at 0 seems to be a problem.\
 \
 //// Buffer\
 s.boot;\
 p = Platform.resourceDir +/+ "sounds/a11wlk01.wav";\
 b = Buffer.read(s, p);\
-\cf3 g = SSTEnvelopedBufferWrapper(0, b);\
-h = g.gui}
+\cf3 f = SSTEnvelopedBufferWrapper(0.1, b);\
+\
+\cf0 (\
+t = \cf3 SuperSimpleTimeline\cf0 .new;\
+t.addItem(w = \cf3 SSTItemWrapper\cf0 (0, \{t.clock.beats.postln\}));\
+t.addItem(x = \cf3 SSTItemWrapper\cf0 (1, \{t.clock.beats.postln\}));\
+t.addItem(y = \cf3 SSTTextWrapper\cf0 (2, \cf5 "t.clock.beats.postln"\cf0 ));\
+t.addItem(z = \cf3 SSTItemWrapper\cf0 (12, \{t.clock.beats.postln\}));\
+t.addItem(f);\
+t.createGroup(\cf4 \\file\cf0 , [f]);\
+\
+g = \cf3 SSTGUI\cf0 (t)\
+)}

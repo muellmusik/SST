@@ -230,13 +230,14 @@ SSTTextWrapper : SSTItemWrapper {
 
 // play a soundfile from a Buffer
 SSTEnvelopedBufferWrapper : SSTItemWrapper {
-	var <>eventCode, <env, defName;
+	var <>eventCode, <env, defName, <id;
 	
 	*new {|time, buffer| ^super.new(time, buffer).init }
 	
 	init {
 		env = Env([1, 1], [wrapped.duration]);
 		defName = "SST-" ++ this.identityHash;
+		id = (this.identityHash%(2.pow(16))).asInteger;
 		this.addDef;
 		eventCode = "Synth(" ++ defName.asCompileString ++ ", [out: 0, rate: 1, mul: 1], target: " ++ wrapped.server.asCompileString ++ ");";
 	}
@@ -244,7 +245,7 @@ SSTEnvelopedBufferWrapper : SSTItemWrapper {
 	addDef {
 		SynthDef(defName, {|out, rate, mul|
 			var output;
-			output = PlayBuf.ar(wrapped.numChannels, wrapped, rate);
+			output = PlayBufSendIndex.ar(wrapped.numChannels, wrapped, rate, indFreq: 30, id: id);
 			output = output * EnvGen.ar(env, timeScale: rate.reciprocal, levelScale: mul, doneAction: 2);
 			Out.ar(out, output);
 		}).add;

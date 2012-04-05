@@ -110,7 +110,7 @@ SSTTextWrapperGUI : AbstractSSTWrapperGUI {
 }
 
 SSTEnvelopedBufferWrapperGUI : AbstractSSTWrapperGUI {
-	var textView, <envView, resetButton, applyButton, sf;
+	var textView, <envView, resetButton, applyButton, sf, oscFunc;
 	
 	makeViews {
 		parent.isNil.if({
@@ -178,6 +178,10 @@ SSTEnvelopedBufferWrapperGUI : AbstractSSTWrapperGUI {
 		sf = SoundFile.new;
 		sf.openRead(wrapper.wrapped.path);
 		sfView.readFile(sf, 0, sf.numFrames, 64, true);
+		sfView.timeCursorOn = true;
+		
+		oscFunc = OSCFunc({|msg| {sfView.timeCursorPosition = msg[3]}.defer; }, '/tr', argTemplate: [nil, wrapper.id, nil]);
+		onClose = onClose.addFunc({oscFunc.free});
 		^compView
 	}
 	
