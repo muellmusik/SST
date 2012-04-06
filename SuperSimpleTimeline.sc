@@ -153,6 +153,42 @@ SuperSimpleTimeline {
 	
 	currentTime_ {|time| if(playing, {this.play(time)}, { pauseTime = time }); this.changed(\time, time) }
 	
+	asRoutineCode {
+		var resultString, lastEventTime = 0;
+		
+		resultString = "/////// Routine Generated from SuperSimpleTimeline\n\n// Resource code\n\n(\n";
+		SSTItemWrapper.startResourceCollect;
+		items.do({|wrapper|
+			var resourceString;
+			resourceString = wrapper.resourceCode;
+			resourceString.notNil.if({
+				resultString = resultString ++ resourceString;
+			});
+		});
+		SSTItemWrapper.cleanUpResourceCollect;
+		
+		// now events
+		resultString = resultString ++ ")\n\n// Event Code \n\n(\nRoutine({\n\n";
+		
+		items.do({|wrapper|
+			var wait, thisEventCode;
+			wait = wrapper.time - lastEventTime;
+			if(wait > 0, {
+				resultString = resultString ++ "\n\t" ++ wait ++ ".wait;\n\n";
+			});
+			thisEventCode = wrapper.eventCode;
+			if(thisEventCode.last != $;, {thisEventCode = thisEventCode ++ $;});
+			resultString = resultString ++ "\t" ++ thisEventCode ++ "\n";
+			lastEventTime = wrapper.time;
+		});
+		
+		resultString = resultString ++ "\n}).play;\n)"
+		^resultString;
+	}
+	
+	asDocument {
+		Document.new("SST -> Routine", this.asRoutineCode).syntaxColorize;
+	}
 }
 
 SSTGroup {
@@ -183,9 +219,13 @@ SSTItemWrapper {
 	var <time;
 	var <>wrapped; // the thing that's executed
 	var <group;
-	var <resources; // a collection of buffers, etc.
+	classvar <resources; // a collection of buffers, etc.
 	
 	*new {|time, wrapped| ^super.newCopyArgs(max(time, 0), wrapped); }
+	
+	*cleanUpResourceCollect { resources = nil }
+	
+	*startResourceCollect { resources = IdentityDictionary.new }
 	
 	time_ {|newTime| time = max(newTime, 0); group.sort;}
 	
@@ -194,10 +234,10 @@ SSTItemWrapper {
 	gui {|parent, origin, name| ^SSTItemWrapperGUI(this, parent, origin, name) }
 	
 	// initialisation code for things like buffers and defs
-	resourceCode { }
+	resourceCode { ^nil }
 	
 	// the code which causes the actual event
-	eventCode { }
+	eventCode { ^(wrapped.asCompileString ++ ".value;") }
 	
 	//execute the event
 	value { wrapped.value }
@@ -216,9 +256,6 @@ SSTTextWrapper : SSTItemWrapper {
 	text_ {|newText| text = newText; this.compileText; }
 	
 	gui {|parent, origin, name| ^SSTTextWrapperGUI(this, parent, origin, name) }
-	
-	// initialisation code for things like buffers and defs
-	resourceCode { }
 	
 	// the code which causes the actual event
 	eventCode { ^text }
@@ -256,10 +293,35 @@ SSTEnvelopedBufferWrapper : SSTItemWrapper {
 	gui {|parent, origin, name| ^SSTEnvelopedBufferWrapperGUI(this, parent, origin, name) }
 	
 	// initialisation code for things like buffers and defs
-	resourceCode { }
-	
-	// the code which causes the actual event
-	//eventCode {  }
+	resourceCode { 
+		var bufKey, resourceString = "";
+		// problem if multiple files with the same name
+		bufKey = ("sst_buf_" ++ wrapped.path.basename.splitext[0]).asSymbol;
+		
+		// only add buffers once
+		if(resources[bufKey].isNil, {
+			resources[bufKey] = wrapped;
+			resourceString = resourceString 
+				++ $~
+				++ bufKey
+				++ " = Buffer.read(" 
+				++ wrapped.server.asCompileString
+				++ ", "
+				++ wrapped.path.asCompileString
+				++ ");\n\n";
+		});
+		
+		// use PlayBuf here instead of PlayBufSendIndex
+		resourceString = resourceString ++
+			"SynthDef(%, {|out, rate, mul|
+	var output;
+	output = PlayBuf.ar(%, ~%, rate);
+	output = output * EnvGen.ar(%, timeScale: rate.reciprocal, levelScale: mul, doneAction: 2);
+	Out.ar(out, output);
+}).add;\n\n".format(defName.asCompileString, wrapped.numChannels, bufKey, env.asCompileString);
+		
+		^resourceString
+	}
 	
 	//execute the event
 	value { eventCode.interpret }
