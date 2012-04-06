@@ -47,6 +47,7 @@ SSTItemWrapperGUI : AbstractSSTWrapperGUI {
 		parent.findWindow.onClose = parent.findWindow.onClose.addFunc({onClose.value});
 		textView.font = Font(Font.defaultMonoFace, 12);
 		textView.string = wrapper.wrapped.asCompileString;
+		textView.enterInterpretsSelection = true;
 		resetButton.action = { textView.string = wrapper.wrapped.asCompileString; };
 		applyButton.action = { wrapper.wrapped = textView.string.interpret; };
 	}
@@ -87,6 +88,7 @@ SSTTextWrapperGUI : AbstractSSTWrapperGUI {
 		parent.findWindow.onClose = parent.findWindow.onClose.addFunc({onClose.value});
 		textView.font = Font(Font.defaultMonoFace, 12);
 		textView.string = wrapper.text;
+		textView.enterInterpretsSelection = true;
 		resetButton.action = { textView.string = wrapper.text; };
 		applyButton.action = { wrapper.text = textView.string; };
 	}
@@ -128,6 +130,7 @@ SSTEnvelopedBufferWrapperGUI : AbstractSSTWrapperGUI {
 		parent.findWindow.onClose = parent.findWindow.onClose.addFunc({onClose.value});
 		textView.font = Font(Font.defaultMonoFace, 12);
 		textView.string = wrapper.eventCode;
+		textView.enterInterpretsSelection = true;
 		resetButton.action = { 
 			textView.string = wrapper.eventCode;
 			envView.setEnv(wrapper.env);
