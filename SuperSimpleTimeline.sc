@@ -15,6 +15,7 @@ SuperSimpleTimeline {
 	var <timeUpdate = 0.04;
 	var <playing = false;
 	var <pauseTime = 0;
+	var <sections;
 
 	*new {|clock| ^super.new.init(clock); }
 	
@@ -26,6 +27,7 @@ SuperSimpleTimeline {
 		groupOrder = List.new;
 		groups = IdentityDictionary.new;
 		this.createGroup('Ungrouped', []);
+		sections = SortedList(8, {|a, b| a.time < b.time });
 	}
 	
 	addItem {|item| 
@@ -145,7 +147,7 @@ SuperSimpleTimeline {
 		this.changed(\groupRemoved, groupName);
 	}
 	
-	addSection {|sectionName, time| } // is this also a kind of event? Probably yes!
+	addSection {|time, name| sections.add((time: time, name: name)); this.changed(\sectionAdded); } 
 	
 	lastEventTime { ^if(items.size > 0, {items.last.time}, {0}); } // more meaningful than duration
 	
@@ -554,6 +556,26 @@ SSTGUI {
 			// draw grid
 			DrawGrid(eventsView.bounds, [0, sst.lastEventTime, 'lin', 1.0].asSpec.grid, BlankGridLines()).draw;
 			
+			// draw section markers
+			Pen.strokeColor = Color.grey;
+			Pen.width = 1;
+			sst.sections.do({|section|
+				var x, sectName, sectionLabelBounds;
+				x = durInv * section.time * eventsView.bounds.width - 2.5;
+				Pen.line(x@0, x@(eventsView.bounds.height - 15));
+				x = x+5;
+				Pen.line(x@0, x@(eventsView.bounds.height - 15));
+				Pen.stroke;
+				sectName = section.name;
+				sectName.notNil.if({
+					x = x + 5;
+					sectionLabelBounds = GUI.current.stringBounds(sectName, labelFont);
+					sectionLabelBounds = sectionLabelBounds.moveToPoint(Point(x, eventsView.bounds.height - 15 - sectionLabelBounds.height));
+					Pen.stringInRect(sectName, sectionLabelBounds, labelFont, Color.grey(0.3));
+				})
+					
+			});
+			
 			// draw time cursor
 			Pen.strokeColor = Color.grey;
 			Pen.width = 2;
@@ -603,7 +625,7 @@ SSTGUI {
 						var x1, x2;
 						x1 = durInv * a.time * eventsView.bounds.width;
 						x2 = durInv * b.time * eventsView.bounds.width;
-						Pen.width = 0.5;
+						Pen.width = 1;
 						Pen.line(x1@groupY, x2@groupY);
 						Pen.stroke;
 					});
@@ -819,6 +841,10 @@ SSTGUI {
 			
 			\groupRemoved, {
 				
+			},
+			
+			\sectionAdded, {
+				cursorView.refresh;
 			}
 			
 		);
