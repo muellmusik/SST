@@ -29,8 +29,8 @@ SuperSimpleTimeline {
 	}
 	
 	addItem {|item| 
-		items.add(item);
 		groups['Ungrouped'].addItem(item);
+		items.add(item);
 	}
 	
 	// we schedule one event at a time, that way we can ignore a scheduled event if its time has changed
