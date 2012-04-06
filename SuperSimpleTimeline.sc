@@ -345,6 +345,13 @@ SSTGUI {
 		^super.new.init(sst, name ? "SuperSimpleTimeline").makeWindow(origin ? (200@200));
 	}
 	
+	*readSST {|path, origin|
+		var new;
+		new = super.new.init(SuperSimpleTimeline.new, name ? "SuperSimpleTimeline").makeWindow(origin ? (200@200)); // a bit ugly
+		{new.readSST(path)}.defer(0.1);
+		^new;
+	}
+	
 	init {|argSST, argName|
 		var hexColours;
 		sst = argSST;
@@ -738,9 +745,26 @@ SSTGUI {
 		});	
 	}
 		
+	writeSST {|path|
+		var archiveDict;
+		archiveDict = IdentityDictionary.new;
+		archiveDict[\sst] = sst;
+		archiveDict[\colorStream] = colorStream;
+		archiveDict[\name] = name;
+		archiveDict[\version] = 1.0;
+		archiveDict.writeArchive(path);
+	}
 
-
-	
+	readSST {|path|
+		var archiveDict;
+		archiveDict = Object.readArchive(path);
+		this.init(archiveDict[\sst], archiveDict[\name]);
+		colorStream = archiveDict[\colorStream];
+		this.makeTimesView;
+		this.makeEventsView;
+		this.resizeInternalViewsIfNeeded;
+	}
+		
 	update { arg changed, what ...args;
 				
 		switch(what,
