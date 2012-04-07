@@ -345,7 +345,7 @@ SSTGUI {
 	var selectedItem, selectedStartX, selectXOffset, timePerPixel, itemRects, visOriginOnSelected, selectedRect;
 	var dependees;
 	var time, curSSTime, refTime, cursorLoc;
-	var zoomSlider, labelFont, labelBounds;
+	var zoomSlider, labelFont, labelBounds, sectionLabelBounds;
 	var inMove = false, groupDragItem, groupDragRect, groupDraggedTo, groupDragStartX, groupDragStartY;
 	var firedItems, firedEnv, fadeDur = 0.3;
 	var colorStream;
@@ -373,6 +373,7 @@ SSTGUI {
 		firedEnv = Env([1, 0], [fadeDur], \sine);
 		labelFont = Font( Font.defaultSansFace, 10 ).boldVariant;
 		labelBounds = IdentityDictionary.new;
+		sectionLabelBounds = IdentityDictionary.new;
 		itemRects = IdentityDictionary.new;
 		/*
 			http://www.colourlovers.com/palette/2066112/purplexed#
@@ -547,20 +548,70 @@ SSTGUI {
 			Pen.width = 1;
 			Pen.fillColor = Color.grey(0.75);
 			sst.sections.do({|section|
-				var x, sectName, sectionLabelBounds;
+				var x, sectName, thisSectionLabelBounds;
 				x = durInv * section.time * eventsView.bounds.width;
 				sectName = section.name;
 				sectName.notNil.if({
-					sectionLabelBounds = GUI.current.stringBounds(sectName, labelFont);
-					sectionLabelBounds = sectionLabelBounds.moveToPoint(Point(x, 5));
-					Pen.fillRect(sectionLabelBounds.outsetBy(1.5));
-					Pen.stringInRect(sectName, sectionLabelBounds, labelFont, Color.grey(0.3));
+					thisSectionLabelBounds = GUI.current.stringBounds(sectName, labelFont);
+					thisSectionLabelBounds = thisSectionLabelBounds.moveToPoint(Point(x, 5));
+					sectionLabelBounds[section] = thisSectionLabelBounds;
+					Pen.fillRect(thisSectionLabelBounds.outsetBy(1.5));
+					Pen.stringInRect(sectName, thisSectionLabelBounds, labelFont, Color.grey(0.3));
 				});
 			});
 		};
 		
-		timesView.mouseDownAction = {|view, x, y| sst.currentTime = x * timePerPixel; };
-		timesView.mouseMoveAction = timesView.mouseDownAction;
+		timesView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
+			var selectedLabel, selectedLabelRect;
+			
+			// if that fails try for a label
+			sectionLabelBounds.keysValuesDo({|section, rect|
+				if(rect.contains((x@y)), {
+					selectedLabelRect = rect; selectedLabel = section;
+				})
+			});
+			
+			// single (maybe drag) or double (open event gui) click
+			if(clickCount < 2, {
+				selectedRect.notNil.if({
+					//visOriginOnSelected = scrollView.visibleOrigin;
+//					selectXOffset = x - visOriginOnSelected.x;
+//					selectedStartX = durInv * selectedItem.time * eventsView.bounds.width;
+//					if(modifiers.isCtrl, {
+//						groupDragStartX = x; 
+//						groupDragStartY = y;
+//						groupDragItem = selectedItem;
+//						groupDragRect = selectedRect;
+//					});
+					sst.currentTime = x * timePerPixel;
+				});
+			}, {
+				selectedLabel.notNil.if({
+					var groupNameEditor, thisLabel;
+					thisLabel = selectedLabel;
+					groupNameEditor = TextField(timesView, selectedLabelRect.outsetBy(3));
+					groupNameEditor.background = Color.grey(0.9);
+					groupNameEditor.string = selectedLabel.name;
+					groupNameEditor.font = labelFont;
+					groupNameEditor.focus(true);
+					groupNameEditor.keyDownAction = {|view, char, modifiers, unicode, keycode|
+						if(unicode == 13, {
+							var newName, index, oldGroup;
+							newName = view.string;
+							if(view.string.size > 0 
+								&& { sst.sections.detect({|item| item.name == newName}).isNil }, {
+								selectedLabel.name = newName;
+								timesView.refresh;
+							});
+							groupNameEditor.remove;
+							true
+						}, { nil });
+					};
+				});
+			});
+			  
+		};
+		timesView.mouseMoveAction = {|view, x, y| sst.currentTime = x * timePerPixel; };
 	}
 	
 	makeEventsView {
