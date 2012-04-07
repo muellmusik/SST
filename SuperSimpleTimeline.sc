@@ -135,6 +135,15 @@ SuperSimpleTimeline {
 		this.resetGroupOrders;
 	}
 	
+	renameGroup {|oldName, newName|
+		var group;
+		group = groups[oldName];
+		groups[newName] = group.name_(newName);
+		groups[oldName] = nil;
+		groupOrder[group.order] = newName;
+		this.changed(\groupRenamed, oldName, newName);
+	}
+	
 	resetGroupOrders {
 		groupOrder.do({|key, i| groups[key].order = i; });
 	}
@@ -194,7 +203,7 @@ SuperSimpleTimeline {
 }
 
 SSTGroup {
-	var <name, <items, <>order, <>color;
+	var <>name, <items, <>order, <>color;
 	
 	*new {|name, items, order| 
 		items = SortedList(items.size, {|a, b| a.time <= b.time}).addAll(items);
@@ -709,11 +718,21 @@ SSTGUI {
 		};
 
 		eventsView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
+			var selectedLabel, selectedLabelRect;
 			// find selected event
 			selectedRect = nil;
 			selectedItem = nil;
 			itemRects.keysValuesDo({|item, rect|
 				if(rect.contains((x@y)), {selectedRect = rect; selectedItem = item;})
+			});
+			
+			// if that fails try for a label
+			if(selectedRect.isNil, {
+				labelBounds.keysValuesDo({|name, rect|
+					if(rect.contains((x@y)) && (name != 'Ungrouped'), {
+						selectedLabelRect = rect; selectedLabel = name;
+					})
+				});
 			});
 			
 			// single (maybe drag) or double (open event gui) click
@@ -744,6 +763,29 @@ SSTGUI {
 							};
 						});
 					});
+				}, {
+					selectedLabel.notNil.if({
+						var groupNameEditor, thisLabel;
+						thisLabel = selectedLabel;
+						groupNameEditor = TextField(backView, selectedLabelRect.outsetBy(3));
+						groupNameEditor.background = Color.grey(0.9);
+						groupNameEditor.string = selectedLabel.asString;
+						groupNameEditor.font = labelFont;
+						groupNameEditor.focus(true);
+						groupNameEditor.keyDownAction = {|view, char, modifiers, unicode, keycode|
+							[char, modifiers, unicode, keycode].postln;
+							if(unicode == 13, {
+								var newName, index, oldGroup;
+								newName = view.string.asSymbol;
+								if(view.string.size > 0 && { sst.groups.keys.includes(newName).not }, {
+									sst.renameGroup(thisLabel, newName);
+								});
+								groupNameEditor.remove;
+								true
+							}, { nil });
+						};
+					});
+				
 				});
 			});
 		};
@@ -849,7 +891,13 @@ SSTGUI {
 			},
 			
 			\groupRemoved, {
-				
+				labelBounds[args[0]] = nil;
+				eventsView.refresh;
+			},
+			
+			\groupRenamed, {
+				labelBounds[args[0]] = nil;
+				eventsView.refresh;
 			},
 			
 			\sectionAdded, {
