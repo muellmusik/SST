@@ -731,14 +731,15 @@ SSTGUI {
 				});
 			}, {
 				selectedItem.notNil.if({
-					var thisGUI;
+					var thisGUI, thisItem;
 					thisGUI = eventGUIs[selectedItem]; 
 					if(thisGUI.notNil, { thisGUI.front }, { 
-						eventGUIs[selectedItem] = thisGUI = selectedItem.gui;
+						thisItem = selectedItem;
+						eventGUIs[thisItem] = thisGUI = thisItem.gui;
 						thisGUI.notNil.if({
 							sst.addDependant(thisGUI);
 							thisGUI.onClose = { 
-								eventGUIs[selectedItem] = nil;
+								eventGUIs[thisItem] = nil;
 								sst.removeDependant(thisGUI);
 							};
 						});
