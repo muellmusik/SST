@@ -551,13 +551,12 @@ SSTGUI {
 				var x, sectName, thisSectionLabelBounds;
 				x = durInv * section.time * eventsView.bounds.width;
 				sectName = section.name;
-				sectName.notNil.if({
-					thisSectionLabelBounds = GUI.current.stringBounds(sectName, labelFont);
-					thisSectionLabelBounds = thisSectionLabelBounds.moveToPoint(Point(x, 5));
-					sectionLabelBounds[section] = thisSectionLabelBounds;
-					Pen.fillRect(thisSectionLabelBounds.outsetBy(1.5));
-					Pen.stringInRect(sectName, thisSectionLabelBounds, labelFont, Color.grey(0.3));
-				});
+				sectName.isNil.if({ sectName = "    " }); // selection space for unnamed
+				thisSectionLabelBounds = GUI.current.stringBounds(sectName, labelFont);
+				thisSectionLabelBounds = thisSectionLabelBounds.moveToPoint(Point(x, 5));
+				sectionLabelBounds[section] = thisSectionLabelBounds;
+				Pen.fillRect(thisSectionLabelBounds.outsetBy(1.5));
+				Pen.stringInRect(sectName, thisSectionLabelBounds, labelFont, Color.grey(0.3));
 			});
 		};
 		
