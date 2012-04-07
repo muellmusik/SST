@@ -532,6 +532,22 @@ SSTGUI {
 			Pen.line(0@20, bounds.width@20);
 			Pen.stroke;
 			Pen.lineDash_(FloatArray[1.0, 0.0]);
+			
+			// draw section labels
+			Pen.strokeColor = Color.grey;
+			Pen.width = 1;
+			Pen.fillColor = Color.grey(0.75);
+			sst.sections.do({|section|
+				var x, sectName, sectionLabelBounds;
+				x = durInv * section.time * eventsView.bounds.width;
+				sectName = section.name;
+				sectName.notNil.if({
+					sectionLabelBounds = GUI.current.stringBounds(sectName, labelFont);
+					sectionLabelBounds = sectionLabelBounds.moveToPoint(Point(x, 5));
+					Pen.fillRect(sectionLabelBounds.outsetBy(1.5));
+					Pen.stringInRect(sectName, sectionLabelBounds, labelFont, Color.grey(0.3));
+				});
+			});
 		};
 		
 		timesView.mouseDownAction = {|view, x, y| sst.currentTime = x * timePerPixel; };
@@ -560,20 +576,12 @@ SSTGUI {
 			Pen.strokeColor = Color.grey;
 			Pen.width = 1;
 			sst.sections.do({|section|
-				var x, sectName, sectionLabelBounds;
+				var x;
 				x = durInv * section.time * eventsView.bounds.width - 2.5;
 				Pen.line(x@0, x@(eventsView.bounds.height - 15));
 				x = x+5;
 				Pen.line(x@0, x@(eventsView.bounds.height - 15));
 				Pen.stroke;
-				sectName = section.name;
-				sectName.notNil.if({
-					x = x + 5;
-					sectionLabelBounds = GUI.current.stringBounds(sectName, labelFont);
-					sectionLabelBounds = sectionLabelBounds.moveToPoint(Point(x, eventsView.bounds.height - 15 - sectionLabelBounds.height));
-					Pen.stringInRect(sectName, sectionLabelBounds, labelFont, Color.grey(0.3));
-				})
-					
 			});
 			
 			// draw time cursor
@@ -845,6 +853,7 @@ SSTGUI {
 			
 			\sectionAdded, {
 				cursorView.refresh;
+				timesView.refresh;
 			}
 			
 		);
