@@ -773,7 +773,6 @@ SSTGUI {
 						groupNameEditor.font = labelFont;
 						groupNameEditor.focus(true);
 						groupNameEditor.keyDownAction = {|view, char, modifiers, unicode, keycode|
-							[char, modifiers, unicode, keycode].postln;
 							if(unicode == 13, {
 								var newName, index, oldGroup;
 								newName = view.string.asSymbol;
