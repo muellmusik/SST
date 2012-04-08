@@ -567,7 +567,6 @@ SSTGUI {
 		
 		timesView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
 			var selectedLabel, selectedLabelRect;
-			
 			// if that fails try for a label
 			sectionLabelBounds.keysValuesDo({|section, rect|
 				if(rect.contains((x@y)), {
@@ -577,7 +576,7 @@ SSTGUI {
 			
 			// single (maybe drag) or double (open event gui) click
 			if(clickCount < 2, {
-				selectedRect.notNil.if({
+				selectedLabelRect.notNil.if({
 					//visOriginOnSelected = scrollView.visibleOrigin;
 //					selectXOffset = x - visOriginOnSelected.x;
 //					selectedStartX = durInv * selectedItem.time * eventsView.bounds.width;
@@ -587,8 +586,7 @@ SSTGUI {
 //						groupDragItem = selectedItem;
 //						groupDragRect = selectedRect;
 //					});
-					sst.currentTime = x * timePerPixel;
-				});
+				}, {sst.currentTime = x * timePerPixel;});
 			}, {
 				selectedLabel.notNil.if({
 					var groupNameEditor, thisLabel;
@@ -607,6 +605,7 @@ SSTGUI {
 								selectedLabel.name = newName;
 								timesView.refresh;
 							});
+							eventsView.focus(true);
 							groupNameEditor.remove;
 							true
 						}, { nil });
@@ -834,6 +833,7 @@ SSTGUI {
 								if(view.string.size > 0 && { sst.groups.keys.includes(newName).not }, {
 									sst.renameGroup(thisLabel, newName);
 								});
+								eventsView.focus(true);
 								groupNameEditor.remove;
 								true
 							}, { nil });
