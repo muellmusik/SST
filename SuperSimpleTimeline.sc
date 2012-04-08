@@ -492,30 +492,35 @@ SSTGUI {
 		timesView.canFocus_(false);
 		
 		timesView.drawFunc = {
-			var oneSec, tenSecs, thirtySecs, bounds;
+			var oneSec, tenSecs, thirtySecs, bounds, halfHeight;
 			bounds = timesView.bounds;
+			// background
 			Pen.addRect(Rect(0, 0, bounds.width, 20));
 			Pen.fillColor = Color.black.alpha_(0.6);
 			Pen.fill;
+			
+			// ticks
+			halfHeight = bounds.height * 0.5;
+			DrawGrid(bounds.copy.height_(halfHeight).top_(halfHeight), [0, sst.lastEventTime, 'lin', 1.0].asSpec.grid, BlankGridLines()).fontColor_(Color.clear).gridColors_(Color.grey(0.7) ! 2).draw;
 
 			tenSecs = timesView.bounds.width * durInv * 10;
 			Pen.beginPath;
-			Pen.strokeColor = Color.grey(0.8);
-			(sst.lastEventTime / 10).floor.do({|i|
-				var x;
-				if((i + 1)%3 == 0, {
-					Pen.width = 2;
-					Pen.lineDash_(FloatArray[1.0, 0]);
-				}, {
-					Pen.width = 1;
-					Pen.lineDash_(FloatArray[3,3]);
-				});
-				x = (i + 1) * tenSecs;
-				Pen.line(x@20, x@0);
-				Pen.stroke;
-			});
-			Pen.width = 1;
-			Pen.lineDash_(FloatArray[]);
+//			Pen.strokeColor = Color.grey(0.8);
+//			(sst.lastEventTime / 10).floor.do({|i|
+//				var x;
+//				if((i + 1)%3 == 0, {
+//					Pen.width = 2;
+//					Pen.lineDash_(FloatArray[1.0, 0]);
+//				}, {
+//					Pen.width = 1;
+//					Pen.lineDash_(FloatArray[3,3]);
+//				});
+//				x = (i + 1) * tenSecs;
+//				Pen.line(x@20, x@0);
+//				Pen.stroke;
+//			});
+//			Pen.width = 1;
+//			Pen.lineDash_(FloatArray[]);
 			thirtySecs = bounds.width * durInv * 30;
 			(sst.lastEventTime / 10).floor.do({|i|
 				((i + 1) * 10).asTimeString(1).drawLeftJustIn(
@@ -524,19 +529,19 @@ SSTGUI {
 					Color.grey(0.8)
 				); 
 			});
-			if(thirtySecs >= scrollView.bounds.width, {
-				oneSec = timesView.bounds.width * durInv;
-				Pen.strokeColor = Color.grey(0.8);
-				sst.lastEventTime.floor.do({|i|
-				var x;
-				if(i%10 != 0, {
-					Pen.lineDash_(FloatArray[1.0, 0.0]);
-					x = i * oneSec;
-					Pen.line(x@20, x@10);
-					Pen.stroke;
-				});
-			});
-			});
+//			if(thirtySecs >= scrollView.bounds.width, {
+//				oneSec = timesView.bounds.width * durInv;
+//				Pen.strokeColor = Color.grey(0.8);
+//				sst.lastEventTime.floor.do({|i|
+//					var x;
+//					if(i%10 != 0, {
+//						Pen.lineDash_(FloatArray[1.0, 0.0]);
+//						x = i * oneSec;
+//						Pen.line(x@20, x@10);
+//						Pen.stroke;
+//					});
+//				});
+//			});
 			Pen.strokeColor = Color.black;
 			Pen.lineDash_(FloatArray[3,3]);
 			Pen.line(0@20, bounds.width@20);
