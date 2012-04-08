@@ -614,7 +614,9 @@ SSTGUI {
 			});
 			  
 		};
-		timesView.mouseMoveAction = {|view, x, y| sst.currentTime = x * timePerPixel; };
+		timesView.mouseMoveAction = {|view, x, y| 
+			sst.currentTime = min(x * timePerPixel, sst.lastEventTime);
+		};
 	}
 	
 	makeEventsView {
