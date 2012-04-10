@@ -886,7 +886,7 @@ SSTGUI {
 						});
 					});
 				}, {
-					(selectedLabel.notNil && (name != 'Ungrouped')).if({
+					(selectedLabel.notNil && (selectedLabel != 'Ungrouped')).if({
 						var groupNameEditor, thisLabel;
 						thisLabel = selectedLabel;
 						groupNameEditor = TextField(backView, selectedLabelRect.outsetBy(3));
