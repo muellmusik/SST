@@ -591,7 +591,7 @@ SSTGUI {
 			}, {
 				selectedSectionLabel.notNil.if({
 					var sectionNameEditor, sectionNameEditorBounds, thisLabel;
-					thisLabel = selectedLabel;
+					thisLabel = selectedSectionLabel;
 					sectionNameEditorBounds = selectedSectionLabelRect.outsetBy(3);
 					sectionNameEditorBounds.width = max(sectionNameEditorBounds.width, 60);
 					sectionNameEditor = TextField(timesView, sectionNameEditorBounds);
@@ -605,7 +605,7 @@ SSTGUI {
 							newName = view.string;
 							if(view.string.size > 0 
 								&& { sst.sections.detect({|item| item.name == newName}).isNil }, {
-								selectedSectionLabel.name = newName;
+								thisLabel.name = newName;
 								timesView.refresh;
 							});
 							eventsView.focus(true);
