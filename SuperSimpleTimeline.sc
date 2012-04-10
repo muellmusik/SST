@@ -349,6 +349,7 @@ SSTGUI {
 	var inMove = false, groupDragItem, groupDragRect, groupDraggedTo, groupDragStartX, groupDragStartY;
 	var selectedLabel, selectedLabelRect;
 	var groupLabelDragRect, groupLabelDragName, groupLabelDragStartY;
+	var selectedSectionLabel, selectedSectionLabelRect;
 	var firedItems, firedEnv, fadeDur = 0.3;
 	var colorStream;
 	var <eventGUIs;
@@ -568,47 +569,40 @@ SSTGUI {
 		};
 		
 		timesView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
-			var selectedLabel, selectedLabelRect;
 			// if that fails try for a label
 			sectionLabelBounds.keysValuesDo({|section, rect|
 				if(rect.contains((x@y)), {
-					selectedLabelRect = rect; selectedLabel = section;
+					selectedSectionLabelRect = rect; selectedSectionLabel = section;
 				})
 			});
 			
 			// single (maybe drag) or double (open event gui) click
 			if(clickCount < 2, {
-				selectedLabelRect.notNil.if({
-					//visOriginOnSelected = scrollView.visibleOrigin;
-//					selectXOffset = x - visOriginOnSelected.x;
-//					selectedStartX = durInv * selectedItem.time * eventsView.bounds.width;
-//					if(modifiers.isCtrl, {
-//						groupDragStartX = x; 
-//						groupDragStartY = y;
-//						groupDragItem = selectedItem;
-//						groupDragRect = selectedRect;
-//					});
+				selectedSectionLabelRect.notNil.if({
+					visOriginOnSelected = scrollView.visibleOrigin;
+					selectXOffset = x - visOriginOnSelected.x;
+					selectedStartX = durInv * selectedSectionLabel.time * eventsView.bounds.width;
 				}, {sst.currentTime = x * timePerPixel;});
 			}, {
-				selectedLabel.notNil.if({
-					var groupNameEditor, thisLabel;
+				selectedSectionLabel.notNil.if({
+					var sectionNameEditor, thisLabel;
 					thisLabel = selectedLabel;
-					groupNameEditor = TextField(timesView, selectedLabelRect.outsetBy(3));
-					groupNameEditor.background = Color.grey(0.9);
-					groupNameEditor.string = selectedLabel.name;
-					groupNameEditor.font = labelFont;
-					groupNameEditor.focus(true);
-					groupNameEditor.keyDownAction = {|view, char, modifiers, unicode, keycode|
+					sectionNameEditor = TextField(timesView, selectedSectionLabelRect.outsetBy(3));
+					sectionNameEditor.background = Color.grey(0.9);
+					sectionNameEditor.string = selectedSectionLabel.name;
+					sectionNameEditor.font = labelFont;
+					sectionNameEditor.focus(true);
+					sectionNameEditor.keyDownAction = {|view, char, modifiers, unicode, keycode|
 						if(unicode == 13, {
 							var newName, index, oldGroup;
 							newName = view.string;
 							if(view.string.size > 0 
 								&& { sst.sections.detect({|item| item.name == newName}).isNil }, {
-								selectedLabel.name = newName;
+								selectedSectionLabel.name = newName;
 								timesView.refresh;
 							});
 							eventsView.focus(true);
-							groupNameEditor.remove;
+							sectionNameEditor.remove;
 							true
 						}, { nil });
 					};
@@ -617,7 +611,33 @@ SSTGUI {
 			  
 		};
 		timesView.mouseMoveAction = {|view, x, y| 
-			sst.currentTime = min(x * timePerPixel, sst.lastEventTime);
+			var time;
+			var visRange, newX, lastX, maxX;
+			selectedSectionLabelRect.notNil.if({
+				inMove = true;
+				// get some info
+				// moving can cause scrolling, so calc distance of x from vis origin
+				lastX = sst.lastEventTime * durInv * eventsView.bounds.width;
+				visRange = Range(scrollView.visibleOrigin.x, scrollView.bounds.width);
+				newX = (x - visRange.start - selectXOffset) + selectedStartX; // could be more than lastX
+				time = newX * timePerPixel;
+				
+				selectedSectionLabel.time = min(time, sst.lastEventTime);
+				
+				// now check if we can see newX and scroll if needed
+				if(visRange.start > newX, {
+					scrollView.visibleOrigin = newX@scrollView.visibleOrigin.y;
+				});
+				if(visRange.end < newX, {
+					scrollView.visibleOrigin = (newX - scrollView.bounds.width + 25)@scrollView.visibleOrigin.y;
+				});
+				
+				timesView.refresh;
+				cursorView.refresh;
+			}, {
+				// drag the time cursor
+				sst.currentTime = min(x * timePerPixel, sst.lastEventTime);
+			});
 		};
 	}
 	
@@ -687,7 +707,7 @@ SSTGUI {
 					labelBounds[name] = thisLabelBounds = GUI.current.stringBounds(label, labelFont).moveToPoint(labelPoint);
 				},{
 					label = (i + 1).asString ++ ". " ++ name.asString;
-					labelPoint = stringX@(i * 40 + 4);
+					labelPoint = stringX@(i * 40 + 5);
 					labelBounds[name] = thisLabelBounds = GUI.current.stringBounds(label, labelFont).moveToPoint(labelPoint);
 				});
 				if(groupDragItem.notNil && { thisLabelBounds.intersects(groupDragRect) }, {
@@ -697,7 +717,7 @@ SSTGUI {
 				});
 				Pen.stringAtPoint(label, labelPoint, labelFont, Color.grey(0.3));
 				
-				groupY = thisLabelBounds.top + 26; // y for the events, not the labels
+				groupY = thisLabelBounds.top + 25; // y for the events, not the labels
 				
 				// draw lines
 				if(name != 'Ungrouped', {
