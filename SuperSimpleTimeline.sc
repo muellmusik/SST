@@ -568,6 +568,11 @@ SSTGUI {
 			});
 		};
 		
+		timesView.mouseUpAction = {
+			selectedSectionLabelRect = nil;
+			selectedSectionLabel = nil;
+		};
+		
 		timesView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
 			// if that fails try for a label
 			sectionLabelBounds.keysValuesDo({|section, rect|
