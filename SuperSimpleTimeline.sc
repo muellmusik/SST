@@ -467,13 +467,13 @@ SSTGUI {
 		window.view.decorator.nextLine.nextLine;
 		window.view.decorator.shift(10, 0);
 		refTime = StaticText(window, Rect(0, 0, 200, 25))
-			.string_("Source Time:") // initialise
+			.string_("Time:") // initialise
 			.font_(Font("Helvetica-Bold", 16));
 		//time = BMTimeReferences.currentTime(ca.timeReference);
 		time = sst.currentTime;
 		cursorLoc = time * durInv * cursorView.bounds.width;
 		
-		refTime.string_("Source Time:" + time.getTimeString);
+		refTime.string_("Time:" + time.getTimeString);
 					
 		window.view.decorator.shift(0, 4);
 	//	curSSTime = SCStaticText(window, Rect(0, 0, 300, 20))
@@ -571,6 +571,7 @@ SSTGUI {
 		timesView.mouseUpAction = {
 			selectedSectionLabelRect = nil;
 			selectedSectionLabel = nil;
+			refTime.string_("Time:" + sst.currentTime.getTimeString);
 		};
 		
 		timesView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
@@ -587,6 +588,7 @@ SSTGUI {
 					visOriginOnSelected = scrollView.visibleOrigin;
 					selectXOffset = x - visOriginOnSelected.x;
 					selectedStartX = durInv * selectedSectionLabel.time * eventsView.bounds.width;
+					refTime.string_("Selected Time:" + selectedSectionLabel.time.getTimeString);
 				}, {sst.currentTime = x * timePerPixel;});
 			}, {
 				selectedSectionLabel.notNil.if({
@@ -630,6 +632,8 @@ SSTGUI {
 				time = newX * timePerPixel;
 				
 				selectedSectionLabel.time = min(time, sst.lastEventTime);
+				
+				refTime.string_("Selected Time:" + selectedSectionLabel.time.getTimeString);
 				
 				// now check if we can see newX and scroll if needed
 				if(visRange.start > newX, {
@@ -787,6 +791,8 @@ SSTGUI {
 						sst.moveItem(time, selectedItem);
 					});
 					
+					refTime.string_("Selected Time:" + time.getTimeString);
+					
 					// now check if we can see newX and scroll if needed
 					if(visRange.start > newX, {
 						scrollView.visibleOrigin = newX@scrollView.visibleOrigin.y;
@@ -824,6 +830,7 @@ SSTGUI {
 					eventsView.refresh;
 				});
 			});
+			refTime.string_("Time:" + time.getTimeString);
 		};
 
 		eventsView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
@@ -851,6 +858,8 @@ SSTGUI {
 				// singleClick, could be item-toGroup or label drag
 				selectedRect.notNil.if({
 					// we're dragging an event
+					
+					refTime.string_("Selected Time:" + selectedItem.time.getTimeString);
 					visOriginOnSelected = scrollView.visibleOrigin;
 					selectXOffset = x - visOriginOnSelected.x;
 					selectedStartX = durInv * selectedItem.time * eventsView.bounds.width;
@@ -976,7 +985,7 @@ SSTGUI {
 			\time, {
 				{
 					time = args[0];
-					refTime.string_("Source Time:" + time.asTimeString);
+					refTime.string_("Time:" + time.asTimeString);
 					cursorLoc = time * durInv * eventsView.bounds.width;
 					// scroll to see cursor
 //					if(args[1] != 0, { // not paused or stopped
