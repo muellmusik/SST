@@ -585,9 +585,11 @@ SSTGUI {
 				}, {sst.currentTime = x * timePerPixel;});
 			}, {
 				selectedSectionLabel.notNil.if({
-					var sectionNameEditor, thisLabel;
+					var sectionNameEditor, sectionNameEditorBounds, thisLabel;
 					thisLabel = selectedLabel;
-					sectionNameEditor = TextField(timesView, selectedSectionLabelRect.outsetBy(3));
+					sectionNameEditorBounds = selectedSectionLabelRect.outsetBy(3);
+					sectionNameEditorBounds.width = max(sectionNameEditorBounds.width, 60);
+					sectionNameEditor = TextField(timesView, sectionNameEditorBounds);
 					sectionNameEditor.background = Color.grey(0.9);
 					sectionNameEditor.string = selectedSectionLabel.name;
 					sectionNameEditor.font = labelFont;
