@@ -131,7 +131,7 @@ SuperSimpleTimeline {
 	
 	orderGroup {|groupName, index|
 		groupOrder.remove(groupName);
-		groupOrder.clipPut(index, groupName);
+		groupOrder.insert(index, groupName);
 		this.resetGroupOrders;
 	}
 	
@@ -347,6 +347,8 @@ SSTGUI {
 	var time, curSSTime, refTime, cursorLoc;
 	var zoomSlider, labelFont, labelBounds, sectionLabelBounds;
 	var inMove = false, groupDragItem, groupDragRect, groupDraggedTo, groupDragStartX, groupDragStartY;
+	var selectedLabel, selectedLabelRect;
+	var groupLabelDragRect, groupLabelDragName, groupLabelDragStartY;
 	var firedItems, firedEnv, fadeDur = 0.3;
 	var colorStream;
 	var <eventGUIs;
@@ -678,18 +680,24 @@ SSTGUI {
 			sst.groupOrder.do({|name, i|
 				var groupY, labelPoint, label, thisLabelBounds;
 				
-				groupY = ((i * 40) + 30);
-				
 				// draw labels
-				label = (i + 1).asString ++ ". " ++ name.asString;
-				labelPoint = stringX@(i * 40 + 4);
-				labelBounds[name] = thisLabelBounds = GUI.current.stringBounds(label, labelFont).moveToPoint(labelPoint);
+				if(groupLabelDragName == name, {
+					label = (i + 1).asString ++ ". " ++ name.asString;
+					labelPoint = stringX@groupLabelDragRect.top;
+					labelBounds[name] = thisLabelBounds = GUI.current.stringBounds(label, labelFont).moveToPoint(labelPoint);
+				},{
+					label = (i + 1).asString ++ ". " ++ name.asString;
+					labelPoint = stringX@(i * 40 + 4);
+					labelBounds[name] = thisLabelBounds = GUI.current.stringBounds(label, labelFont).moveToPoint(labelPoint);
+				});
 				if(groupDragItem.notNil && { thisLabelBounds.intersects(groupDragRect) }, {
 					Pen.fillColor = Color.white.alpha_(0.6);
 					Pen.fillRect(thisLabelBounds.resizeBy(4, 4).moveBy(-2, -2));
 					groupDraggedTo = name;
 				});
-				Pen.stringAtPoint(label, stringX@(i * 40 + 4), labelFont, Color.grey(0.3));
+				Pen.stringAtPoint(label, labelPoint, labelFont, Color.grey(0.3));
+				
+				groupY = thisLabelBounds.top + 26; // y for the events, not the labels
 				
 				// draw lines
 				if(name != 'Ungrouped', {
@@ -704,6 +712,7 @@ SSTGUI {
 					});
 					Pen.lineDash = FloatArray[1.0, 0];
 				});
+				
 				
 				// draw events
 				Pen.fillColor = groups[name].color;
@@ -731,6 +740,7 @@ SSTGUI {
 			var time;
 			var visRange, newX, lastX, maxX;
 			if(selectedItem.notNil, {
+				// doing something with an event
 				if(groupDragItem.notNil, {	// drag item to a group
 					groupDragRect = selectedRect.moveBy(x - groupDragStartX, y - groupDragStartY);
 					eventsView.refresh;
@@ -760,6 +770,12 @@ SSTGUI {
 					
 					if(modifiers.isShift, { timesView.refresh; cursorView.refresh; });
 				});
+			}, {
+				if(groupLabelDragName.notNil, {
+					// dragging a group label
+					groupLabelDragRect = selectedLabelRect.moveBy(0, y - groupLabelDragStartY);
+					eventsView.refresh;
+				});
 			});
 		};
 		
@@ -770,11 +786,23 @@ SSTGUI {
 				groupDragItem = nil;
 				groupDragRect = nil;
 				eventsView.refresh;
+			}, {
+				if(groupLabelDragName.notNil, {
+					var newInd;
+					newInd = this.indexOfDraggedLabelBounds(groupLabelDragRect);
+					sst.orderGroup(groupLabelDragName, newInd);
+					groupLabelDragName = nil;
+					groupLabelDragStartY = nil;
+					groupLabelDragRect = nil;
+					eventsView.refresh;
+				});
 			});
 		};
 
 		eventsView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
-			var selectedLabel, selectedLabelRect;
+			selectedLabel = nil; 
+			selectedLabelRect = nil;
+			
 			// find selected event
 			selectedRect = nil;
 			selectedItem = nil;
@@ -785,26 +813,37 @@ SSTGUI {
 			// if that fails try for a label
 			if(selectedRect.isNil, {
 				labelBounds.keysValuesDo({|name, rect|
-					if(rect.contains((x@y)) && (name != 'Ungrouped'), {
+					if(rect.contains((x@y)), {
 						selectedLabelRect = rect; selectedLabel = name;
 					})
 				});
 			});
 			
-			// single (maybe drag) or double (open event gui) click
+			
 			if(clickCount < 2, {
+				// singleClick, could be item-toGroup or label drag
 				selectedRect.notNil.if({
+					// we're dragging an event
 					visOriginOnSelected = scrollView.visibleOrigin;
 					selectXOffset = x - visOriginOnSelected.x;
 					selectedStartX = durInv * selectedItem.time * eventsView.bounds.width;
 					if(modifiers.isCtrl, {
+						// we're dragging an event to a group
 						groupDragStartX = x; 
 						groupDragStartY = y;
 						groupDragItem = selectedItem;
 						groupDragRect = selectedRect;
 					});
+				}, {
+					if(selectedLabelRect.notNil && modifiers.isCtrl, {
+						// we're dragging a group label
+						groupLabelDragStartY = y;
+						groupLabelDragRect = selectedLabelRect;
+						groupLabelDragName = selectedLabel;
+					});
 				});
 			}, {
+				// doubleClick
 				selectedItem.notNil.if({
 					var thisGUI, thisItem;
 					thisGUI = eventGUIs[selectedItem]; 
@@ -820,7 +859,7 @@ SSTGUI {
 						});
 					});
 				}, {
-					selectedLabel.notNil.if({
+					(selectedLabel.notNil && (name != 'Ungrouped')).if({
 						var groupNameEditor, thisLabel;
 						thisLabel = selectedLabel;
 						groupNameEditor = TextField(backView, selectedLabelRect.outsetBy(3));
@@ -845,6 +884,11 @@ SSTGUI {
 				});
 			});
 		};
+	}
+	
+	// this finds the new index for a dragged group label
+	indexOfDraggedLabelBounds {|draggedBounds|
+		^labelBounds.values.asArray.sort({|a, b| a.top < b.top }).indexOfEqual(draggedBounds);
 	}
 	
 	recalcZoom {
