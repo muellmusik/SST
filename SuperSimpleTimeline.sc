@@ -9,7 +9,7 @@
 
 // might be simpler to just make it uneditable while playing
 
-SuperSimpleTimeline {
+SST {
 	var <clock, <items, queue, clockStart, nextTime, playOffset;
 	var <groups, <groupOrder;
 	var <timeUpdate = 0.04;
@@ -361,7 +361,7 @@ SSTGUI {
 	
 	*readSST {|path, origin|
 		var new;
-		new = super.new.init(SuperSimpleTimeline.new, name ? "SuperSimpleTimeline").makeWindow(origin ? (200@200)); // a bit ugly
+		new = super.new.init(SST.new, name ? "SuperSimpleTimeline").makeWindow(origin ? (200@200)); // a bit ugly
 		{new.readSST(path)}.defer(0.1);
 		^new;
 	}
