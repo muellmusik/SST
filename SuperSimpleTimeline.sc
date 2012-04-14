@@ -596,6 +596,7 @@ SSTGUI {
 				}, {sst.currentTime = x * timePerPixel;});
 			}, {
 				selectedSectionLabel.notNil.if({
+					// we've double clicked on a label
 					var sectionNameEditor, sectionNameEditorBounds, thisLabel;
 					thisLabel = selectedSectionLabel;
 					sectionNameEditorBounds = selectedSectionLabelRect.outsetBy(3);
@@ -885,6 +886,7 @@ SSTGUI {
 			}, {
 				// doubleClick
 				selectedItem.notNil.if({
+					// pop open item editor
 					var thisGUI, thisItem;
 					thisGUI = eventGUIs[selectedItem]; 
 					if(thisGUI.notNil, { thisGUI.front }, { 
@@ -900,6 +902,7 @@ SSTGUI {
 					});
 				}, {
 					(selectedLabel.notNil && (selectedLabel != 'Ungrouped')).if({
+						// edit group label
 						var groupNameEditor, thisLabel;
 						thisLabel = selectedLabel;
 						groupNameEditor = TextField(backView, selectedLabelRect.outsetBy(3));
@@ -919,6 +922,22 @@ SSTGUI {
 								true
 							}, { nil });
 						};
+					}, {
+						// make a new event
+						var newEventTime, newEvent, thisLabelDist;
+						var closestLabelDist = inf, newEventLabel;
+						
+						newEventTime = x * timePerPixel;
+						sst.addItem(newEvent = SSTTextWrapper(newEventTime, ""));
+						labelBounds.keysValuesDo({|name, bounds|
+							thisLabelDist = abs(bounds.bottom - y);
+							if(thisLabelDist <= closestLabelDist, {
+								closestLabelDist = thisLabelDist;
+								newEventLabel = name;
+							});
+						});
+						sst.groups[newEventLabel].addItem(newEvent);
+						{ newEvent.gui }.defer(0.1);
 					});
 				
 				});
