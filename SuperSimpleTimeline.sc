@@ -452,12 +452,12 @@ SSTGUI {
 			var pixelsPerSecond, newWidth;
 			// pixels per second from whole sequence to 1 second
 			pixelsPerSecond = [(scrollView.bounds.width - 4) * durInv, (scrollView.bounds.width - 4), \cos].asSpec.map(view.value);
-			newWidth = (sst.lastEventTime * pixelsPerSecond).round;
+			newWidth = (max(sst.lastEventTime, 1) * pixelsPerSecond).round;
 			backView.bounds = backView.bounds.width_(newWidth);
 			eventsView.bounds = eventsView.bounds.width_(newWidth);
 			cursorView.bounds = cursorView.bounds.width_(newWidth);
 			timesView.bounds = timesView.bounds.width_(newWidth);
-			timePerPixel = sst.lastEventTime / newWidth;
+			timePerPixel = max(sst.lastEventTime, 1) / newWidth;
 		}).canFocus_(false).enabled_(true);
 		StaticText(window, Rect(0, 0, 10, 10)).string_("+").font_(Font("Helvetica-Bold", 10));
 		window.view.decorator.shift(0, -5);
@@ -466,7 +466,7 @@ SSTGUI {
 		
 		this.makeEventsView;
 		
-		timePerPixel = sst.lastEventTime / eventsView.bounds.width;
+		timePerPixel = max(sst.lastEventTime, 1) / eventsView.bounds.width;
 		
 		window.view.decorator.nextLine.nextLine;
 		window.view.decorator.shift(10, 0);
@@ -952,7 +952,7 @@ SSTGUI {
 			backView.bounds = backView.bounds.width_(lastX); 
 			timesView.bounds = timesView.bounds.width_(lastX);
 			durInv =  max(sst.lastEventTime, 1).reciprocal;
-			timePerPixel = sst.lastEventTime / eventsView.bounds.width;
+			timePerPixel = max(sst.lastEventTime, 1) / eventsView.bounds.width;
 			timesView.refresh;
 			cursorView.refresh;
 			this.recalcZoom;
