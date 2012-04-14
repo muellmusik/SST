@@ -169,6 +169,7 @@ SST {
 	
 	asRoutineCode {
 		var resultString, lastEventTime = 0;
+		var sectionsList;
 		
 		resultString = "/////// Routine Generated from SuperSimpleTimeline\n\n// Resource code\n\n(\n";
 		SSTItemWrapper.startResourceCollect;
@@ -184,11 +185,16 @@ SST {
 		// now events
 		resultString = resultString ++ ")\n\n// Event Code \n\n(\nRoutine({\n\n";
 		
+		sectionsList = sections.as(Array).reverse;
+		
 		items.do({|wrapper|
 			var wait, thisEventCode;
 			wait = wrapper.time - lastEventTime;
 			if(wait > 0, {
 				resultString = resultString ++ "\n\t" ++ wait ++ ".wait;\n\n";
+			});
+			while({sectionsList.size > 0 && {wrapper.time >= sectionsList.last.time}}, {
+				resultString = resultString ++ "/////// Section " ++ sectionsList.pop.name ++ " ///////\n\n";
 			});
 			thisEventCode = wrapper.eventCode;
 			if(thisEventCode.last != $;, {thisEventCode = thisEventCode ++ $;});
