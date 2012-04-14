@@ -33,6 +33,8 @@ SST {
 	addItem {|item| 
 		groups['Ungrouped'].addItem(item);
 		items.add(item);
+		item.sst = this;
+		this.changed(\items);
 	}
 	
 	// we schedule one event at a time, that way we can ignore a scheduled event if its time has changed
@@ -90,8 +92,9 @@ SST {
 	
 	removeItem {|item| 
 		items.remove(item);
-		groups.do({|items| items.remove(item) });
+		item.group.removeItem(item);
 		if(playing, {this.play(clock.beats - clockStart)}); // this will rebuild the queue
+		this.changed(\items);
 	}
 	
 	moveItem {|time, item|
@@ -230,6 +233,7 @@ SSTItemWrapper {
 	var <time;
 	var <>wrapped; // the thing that's executed
 	var <group;
+	var <>sst;
 	classvar <resources; // a collection of buffers, etc.
 	
 	*new {|time, wrapped| ^super.newCopyArgs(max(time, 0), wrapped); }
@@ -978,6 +982,11 @@ SSTGUI {
 				
 		switch(what,
 			\itemTimes, { 
+				this.resizeInternalViewsIfNeeded;
+				{eventsView.refresh; cursorView.refresh;}.defer;
+			},
+			
+			\items, {
 				this.resizeInternalViewsIfNeeded;
 				{eventsView.refresh; cursorView.refresh;}.defer;
 			},

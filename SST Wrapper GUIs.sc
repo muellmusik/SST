@@ -26,11 +26,27 @@ AbstractSSTWrapperGUI {
 		); 
 	}
 	
+	deleteItem {
+		var confirmWind, ok, cancel;
+		
+		confirmWind = Window().alwaysOnTop_(true).front;
+		
+		confirmWind.layout = VLayout(
+			StaticText().string_("Are you sure you want to delete this item?"),
+			HLayout(nil,
+				[cancel = Button().states_([["Cancel"]]), align:\right], 
+				[ok = Button().states_([["Ok"]]), align:\right]
+			)
+		);
+		cancel.action = { confirmWind.close; };
+		ok.action = { wrapper.sst.removeItem(wrapper); parent.findWindow.close; confirmWind.close; };
+	}
+	
 }
 
 // basic version just posts item asCompileString; may not be editable
 SSTItemWrapperGUI : AbstractSSTWrapperGUI {
-	var textView, resetButton, applyButton;
+	var textView, resetButton, applyButton, deleteButton;
 	
 	makeViews {
 		parent.isNil.if({
@@ -38,7 +54,8 @@ SSTItemWrapperGUI : AbstractSSTWrapperGUI {
 		});
 		parent.findWindow.layout = VLayout(
 			textView = TextView().stringColor = Color.black,
-			HLayout(nil, 
+			HLayout(nil,
+				[deleteButton = Button().states_([["Delete"]]), align:\right],
 				[resetButton = Button().states_([["Reset"]]), align:\right], 
 				[applyButton = Button().states_([["Apply"]]), align:\right]
 			)
@@ -50,6 +67,7 @@ SSTItemWrapperGUI : AbstractSSTWrapperGUI {
 		textView.enterInterpretsSelection = true;
 		resetButton.action = { textView.string = wrapper.wrapped.asCompileString; };
 		applyButton.action = { wrapper.wrapped = textView.string.interpret; };
+		deleteButton.action = { this.deleteItem };
 	}
 	
 	itemFired {
@@ -71,7 +89,7 @@ SSTItemWrapperGUI : AbstractSSTWrapperGUI {
 }
 
 SSTTextWrapperGUI : AbstractSSTWrapperGUI {
-	var textView, resetButton, applyButton;
+	var textView, resetButton, applyButton, deleteButton;
 	
 	makeViews {
 		parent.isNil.if({
@@ -79,7 +97,8 @@ SSTTextWrapperGUI : AbstractSSTWrapperGUI {
 		});
 		parent.findWindow.layout = VLayout(
 			textView = TextView().stringColor = Color.black,
-			HLayout(nil, 
+			HLayout(nil,
+				[deleteButton = Button().states_([["Delete"]]), align:\right],
 				[resetButton = Button().states_([["Reset"]]), align:\right], 
 				[applyButton = Button().states_([["Apply"]]), align:\right]
 			)
@@ -91,6 +110,7 @@ SSTTextWrapperGUI : AbstractSSTWrapperGUI {
 		textView.enterInterpretsSelection = true;
 		resetButton.action = { textView.string = wrapper.text; };
 		applyButton.action = { wrapper.text = textView.string; };
+		deleteButton.action = { this.deleteItem };
 	}
 	
 	itemFired {
@@ -112,7 +132,7 @@ SSTTextWrapperGUI : AbstractSSTWrapperGUI {
 }
 
 SSTEnvelopedBufferWrapperGUI : AbstractSSTWrapperGUI {
-	var textView, <envView, resetButton, applyButton, sf, oscFunc;
+	var textView, <envView, resetButton, applyButton, deleteButton, sf, oscFunc;
 	
 	makeViews {
 		parent.isNil.if({
@@ -121,7 +141,8 @@ SSTEnvelopedBufferWrapperGUI : AbstractSSTWrapperGUI {
 		parent.findWindow.layout = VLayout(
 			textView = TextView().stringColor = Color.black,
 			this.makeEnvView,
-			HLayout(nil, 
+			HLayout(nil,
+				[deleteButton = Button().states_([["Delete"]]), align:\right],
 				[resetButton = Button().states_([["Reset"]]), align:\right], 
 				[applyButton = Button().states_([["Apply"]]), align:\right]
 			)
@@ -141,6 +162,7 @@ SSTEnvelopedBufferWrapperGUI : AbstractSSTWrapperGUI {
 			wrapper.eventCode = textView.string; 
 			wrapper.env = Env(vals[1], (vals[0] * sf.duration).differentiate.copyToEnd(1));
 		};
+		deleteButton.action = { this.deleteItem };
 	}
 	
 	makeEnvView {
