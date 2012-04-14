@@ -358,6 +358,7 @@ SSTGUI {
 	var colorStream;
 	var <eventGUIs;
 	var groups;
+	var width = 1008;
 	
 	*new {|sst, name, origin|
 		^super.new.init(sst, name ? "SuperSimpleTimeline").makeWindow(origin ? (200@200));
@@ -418,9 +419,8 @@ SSTGUI {
 	}
 	
 	makeWindow { |origin|
-		var width = 1008;
 		
-		durInv = sst.lastEventTime.reciprocal;
+		durInv =  max(sst.lastEventTime, 1).reciprocal;
 		
 		window = Window.new(name, Rect(origin.x, origin.y, width, 400), false);
 		window.view.decorator = FlowLayout(window.view.bounds);
@@ -508,7 +508,7 @@ SSTGUI {
 			
 			// ticks
 			halfHeight = bounds.height * 0.5;
-			DrawGrid(bounds.copy.height_(halfHeight).top_(halfHeight), [0, sst.lastEventTime, 'lin', 1.0].asSpec.grid, BlankGridLines()).fontColor_(Color.clear).gridColors_(Color.grey(0.7) ! 2).draw;
+			DrawGrid(bounds.copy.height_(halfHeight).top_(halfHeight), [0, max(sst.lastEventTime, 1), 'lin', 1.0].asSpec.grid, BlankGridLines()).fontColor_(Color.clear).gridColors_(Color.grey(0.7) ! 2).draw;
 
 			tenSecs = timesView.bounds.width * durInv * 10;
 			Pen.beginPath;
@@ -672,7 +672,7 @@ SSTGUI {
 			
 		cursorView.drawFunc = {
 			// draw grid
-			DrawGrid(eventsView.bounds, [0, sst.lastEventTime, 'lin', 1.0].asSpec.grid, BlankGridLines()).draw;
+			DrawGrid(eventsView.bounds, [0, max(sst.lastEventTime, 1), 'lin', 1.0].asSpec.grid, BlankGridLines()).draw;
 			
 			// draw section markers
 			Pen.strokeColor = Color.grey;
@@ -943,6 +943,7 @@ SSTGUI {
 		lastX = sst.lastEventTime * durInv * eventsView.bounds.width;
 		// now check if we need to extend and recalc durInv
 		// if we comment this out we get a zooming behaviour with no jumps
+		lastX = max(lastX, width - 10);
 		if(lastX != eventsView.bounds.width, {
 			lastX = max(scrollView.bounds.width - 4, lastX);
 			backView.bounds = backView.bounds.width_(lastX);
@@ -950,7 +951,7 @@ SSTGUI {
 			cursorView.bounds = eventsView.bounds.width_(lastX);
 			backView.bounds = backView.bounds.width_(lastX); 
 			timesView.bounds = timesView.bounds.width_(lastX);
-			durInv =  sst.lastEventTime.reciprocal;
+			durInv =  max(sst.lastEventTime, 1).reciprocal;
 			timePerPixel = sst.lastEventTime / eventsView.bounds.width;
 			timesView.refresh;
 			cursorView.refresh;
