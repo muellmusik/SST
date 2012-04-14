@@ -460,6 +460,35 @@ SSTGUI {
 			timePerPixel = max(sst.lastEventTime, 1) / newWidth;
 		}).canFocus_(false).enabled_(true);
 		StaticText(window, Rect(0, 0, 10, 10)).string_("+").font_(Font("Helvetica-Bold", 10));
+		Button(window, Rect(0, 0, 40, 15))
+			.states_([["+ group"]])
+			.font_(Font("Helvetica-Bold", 10))
+			.canFocus_(false)
+			.action_({
+				var groupNameEditor, thisLabel, thisLabelRect;
+				sst.createGroup('New Group', []);
+				eventsView.refresh;
+				{
+				thisLabelRect = labelBounds['New Group'];
+				thisLabel = 'New Group';
+				groupNameEditor = TextField(backView, thisLabelRect.outsetBy(3));
+				groupNameEditor.background = Color.grey(0.9);
+				groupNameEditor.font = labelFont;
+				groupNameEditor.focus(true);
+				groupNameEditor.keyDownAction = {|view, char, modifiers, unicode, keycode|
+					if(unicode == 13, {
+						var newName, index, oldGroup;
+						newName = view.string.asSymbol;
+						if(view.string.size > 0 && { sst.groups.keys.includes(newName).not }, {
+							sst.renameGroup(thisLabel, newName);
+						});
+						eventsView.focus(true);
+						groupNameEditor.remove;
+						true
+					}, { nil });
+				};
+				}.defer(0.1);
+			});
 		window.view.decorator.shift(0, -5);
 
 		window.front;
@@ -480,6 +509,7 @@ SSTGUI {
 		refTime.string_("Time:" + time.asTimeString);
 					
 		window.view.decorator.shift(0, 4);
+		
 	//	curSSTime = SCStaticText(window, Rect(0, 0, 300, 20))
 //			.string_("Selected Snapshot Time:") // initialise
 //			.font_(Font("Helvetica-Bold", 12));
