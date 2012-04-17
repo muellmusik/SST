@@ -83,7 +83,7 @@ SST {
 				clock.sched((nextTime = queue.topPriority) - lastTime, 
 					{this.nextEvent(thisQueue)}); 
 			}, {playing = false});
-		}, {"queue changed".warn;});
+		});
 	}
 
 	itemAtTime {|time|
