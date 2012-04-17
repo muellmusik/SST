@@ -354,7 +354,7 @@ SSTEnvelopedBufferWrapper : SSTItemWrapper {
 }
 
 SSTGUI {
-	var sst, eventsView, cursorView, window, name, onClose;
+	var <sst, eventsView, cursorView, window, name, onClose;
 	var path, sf, durInv, sfView, scrollView, selectView, backView, timesView;
 	var selectedItem, selectedStartX, selectXOffset, timePerPixel, itemRects, visOriginOnSelected, selectedRect;
 	var dependees;
