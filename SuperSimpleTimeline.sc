@@ -10,7 +10,7 @@
 // might be simpler to just make it uneditable while playing
 
 SST {
-	var <clock, <items, queue, clockStart, nextTime, playOffset;
+	var <>clock, <items, queue, clockStart, nextTime, playOffset;
 	var <groups, <groupOrder;
 	var <timeUpdate = 0.04;
 	var <playing = false;
