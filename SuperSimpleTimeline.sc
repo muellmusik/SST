@@ -169,21 +169,25 @@ SST {
 	
 	asRoutineCode {
 		var resultString, lastEventTime = 0;
-		var sectionsList;
+		var sectionsList, resources = false;
 		
-		resultString = "/////// Routine Generated from SuperSimpleTimeline\n\n// Resource code\n\n(\n";
 		SSTItemWrapper.startResourceCollect;
 		items.do({|wrapper|
 			var resourceString;
 			resourceString = wrapper.resourceCode;
 			resourceString.notNil.if({
+				resources = true;
 				resultString = resultString ++ resourceString;
 			});
 		});
 		SSTItemWrapper.cleanUpResourceCollect;
 		
+		if(resources, {
+			resultString = "/////// Routine Generated from SuperSimpleTimeline\n\n// Resource code\n\n(\n" ++ resultString ++ ")\n\n";
+		});
+		
 		// now events
-		resultString = resultString ++ ")\n\n// Event Code \n\n(\nRoutine({\n\n";
+		resultString = resultString ++ "// Event Code \n\n(\nRoutine({\n\n";
 		
 		sectionsList = sections.as(Array).reverse;
 		
