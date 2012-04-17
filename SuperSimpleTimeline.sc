@@ -1022,9 +1022,11 @@ SSTGUI {
 		var archiveDict;
 		archiveDict = IdentityDictionary.new;
 		archiveDict[\sst] = sst;
+		archiveDict[\tempo] = sst.clock.tempo;
 		archiveDict[\colorStream] = colorStream;
 		archiveDict[\name] = name;
 		archiveDict[\version] = 1.0;
+		archiveDict[\zoom] = zoomSlider.value;
 		archiveDict.writeArchive(path);
 	}
 
@@ -1032,10 +1034,12 @@ SSTGUI {
 		var archiveDict;
 		archiveDict = Object.readArchive(path);
 		this.init(archiveDict[\sst], archiveDict[\name]);
+		sst.clock = TempoClock.new(archiveDict[\tempo] ? 1);
 		colorStream = archiveDict[\colorStream];
 		this.makeTimesView;
 		this.makeEventsView;
 		this.resizeInternalViewsIfNeeded;
+		{zoomSlider.valueAction = archiveDict[\zoom] ? 0.0 }.defer(0.01);
 	}
 		
 	update { arg changed, what ...args;
