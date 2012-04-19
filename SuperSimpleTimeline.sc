@@ -267,6 +267,8 @@ SSTItemWrapper {
 	//execute the event
 	value { wrapped.value }
 	
+	initFromArchive { }
+	
 }
 
 // text to be evaluated
@@ -304,13 +306,15 @@ SSTEnvelopedBufferWrapper : SSTItemWrapper {
 		eventCode = "Synth(" ++ defName.asCompileString ++ ", [out: 0, rate: 1, mul: 1], target: " ++ wrapped.server.asCompileString ++ ");";
 	}
 	
+	initFromArchive { wrapped = Buffer.read(wrapped.server, wrapped.path, action: { this.addDef}); }
+	
 	addDef {
 		SynthDef(defName, {|out, rate, mul|
 			var output;
 			output = PlayBufSendIndex.ar(wrapped.numChannels, wrapped, rate, indFreq: 30, id: id);
 			output = output * EnvGen.ar(env, timeScale: rate.reciprocal, levelScale: mul, doneAction: 2);
 			Out.ar(out, output);
-		}).add;
+		}).send(Server.default); // why doesn't add work?
 	}
 	
 	env_{|newEnv| env = newEnv; this.addDef }
@@ -1039,6 +1043,7 @@ SSTGUI {
 		this.makeTimesView;
 		this.makeEventsView;
 		this.resizeInternalViewsIfNeeded;
+		sst.items.do(_.initFromArchive);
 		{zoomSlider.valueAction = archiveDict[\zoom] ? 0.0 }.defer(0.01);
 	}
 		
