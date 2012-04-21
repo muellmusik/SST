@@ -363,7 +363,7 @@ SSTGUI {
 	var selectedItem, selectedStartX, selectXOffset, timePerPixel, itemRects, visOriginOnSelected, selectedRect;
 	var dependees;
 	var time, curSSTime, refTime, cursorLoc;
-	var zoomSlider, labelFont, labelBounds, sectionLabelBounds;
+	var zoomSlider, labelFont, labelBounds, sectionLabelBounds, brakFont;
 	var inMove = false, groupDragItem, groupDragRect, groupDraggedTo, groupDragStartX, groupDragStartY;
 	var selectedLabel, selectedLabelRect;
 	var groupLabelDragRect, groupLabelDragName, groupLabelDragStartY;
@@ -394,6 +394,7 @@ SSTGUI {
 		firedItems = IdentityDictionary.new;
 		firedEnv = Env([1, 0], [fadeDur], \sine);
 		labelFont = Font( Font.defaultSansFace, 10 ).boldVariant;
+		brakFont = Font( Font.defaultSansFace, 24 ).boldVariant;
 		labelBounds = IdentityDictionary.new;
 		sectionLabelBounds = IdentityDictionary.new;
 		itemRects = IdentityDictionary.new;
@@ -779,18 +780,14 @@ SSTGUI {
 				
 				groupY = thisLabelBounds.top + 25; // y for the events, not the labels
 				
-				// draw lines
-				if(name != 'Ungrouped', {
-					Pen.lineDash = FloatArray[4.0, 2.0];
-					sst.groups[name].items.doAdjacentPairs({|a, b|
-						var x1, x2;
-						x1 = durInv * a.time * eventsView.bounds.width;
-						x2 = durInv * b.time * eventsView.bounds.width;
-						Pen.width = 1;
-						Pen.line(x1@groupY, x2@groupY);
-						Pen.stroke;
-					});
-					Pen.lineDash = FloatArray[1.0, 0];
+				// draw brackets
+				if(name != 'Ungrouped' && (sst.groups[name].items.size.postln > 0), {
+					var openX, closeX, brakSize;
+					brakSize = GUI.current.stringBounds("[", brakFont);
+					openX = sst.groups[name].items.first.time * durInv * eventsView.bounds.width - (brakSize.width * 2.5);
+					closeX = sst.groups[name].items.last.time * durInv * eventsView.bounds.width + (brakSize.width * 1.5);
+					Pen.stringAtPoint("[", openX@(groupY - (brakSize.height * 0.5)), brakFont, Color.grey(0.6));
+					Pen.stringAtPoint("]", closeX@(groupY - (brakSize.height * 0.5)), brakFont, Color.grey(0.6));
 				});
 				
 				
