@@ -314,7 +314,7 @@ SSTEnvelopedBufferWrapper : SSTItemWrapper {
 			output = PlayBufSendIndex.ar(wrapped.numChannels, wrapped, rate, indFreq: 30, id: id);
 			output = output * EnvGen.ar(env, timeScale: rate.reciprocal, levelScale: mul, doneAction: 2);
 			Out.ar(out, output);
-		}).send(Server.default); // why doesn't add work?
+		}).add; 
 	}
 	
 	env_{|newEnv| env = newEnv; this.addDef }
@@ -1040,7 +1040,6 @@ SSTGUI {
 		this.makeTimesView;
 		this.makeEventsView;
 		this.resizeInternalViewsIfNeeded;
-		sst.items.do(_.initFromArchive);
 		{zoomSlider.valueAction = archiveDict[\zoom] ? 0.0 }.defer(0.01);
 	}
 		
