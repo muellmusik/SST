@@ -485,7 +485,7 @@ SSTGUI {
 				{
 				thisLabelRect = labelBounds['New Group'];
 				thisLabel = 'New Group';
-				groupNameEditor = TextField(backView, thisLabelRect.outsetBy(3));
+				groupNameEditor = TextField(backView, thisLabelRect.insetBy(-3));
 				groupNameEditor.background = Color.grey(0.9);
 				groupNameEditor.font = labelFont;
 				groupNameEditor.focus(true);
@@ -611,7 +611,7 @@ SSTGUI {
 				thisSectionLabelBounds = GUI.current.stringBounds(sectName, labelFont);
 				thisSectionLabelBounds = thisSectionLabelBounds.moveToPoint(Point(x, 5));
 				sectionLabelBounds[section] = thisSectionLabelBounds;
-				Pen.fillRect(thisSectionLabelBounds.outsetBy(1.5));
+				Pen.fillRect(thisSectionLabelBounds.insetBy(-1.5));
 				Pen.stringInRect(sectName, thisSectionLabelBounds, labelFont, Color.grey(0.3));
 			});
 		};
@@ -643,7 +643,7 @@ SSTGUI {
 					// we've double clicked on a label
 					var sectionNameEditor, sectionNameEditorBounds, thisLabel;
 					thisLabel = selectedSectionLabel;
-					sectionNameEditorBounds = selectedSectionLabelRect.outsetBy(3);
+					sectionNameEditorBounds = selectedSectionLabelRect.insetBy(-3);
 					sectionNameEditorBounds.width = max(sectionNameEditorBounds.width, 60);
 					sectionNameEditor = TextField(timesView, sectionNameEditorBounds);
 					sectionNameEditor.background = Color.grey(0.9);
@@ -945,7 +945,7 @@ SSTGUI {
 						// edit group label
 						var groupNameEditor, thisLabel;
 						thisLabel = selectedLabel;
-						groupNameEditor = TextField(backView, selectedLabelRect.outsetBy(3));
+						groupNameEditor = TextField(backView, selectedLabelRect.insetBy(-3));
 						groupNameEditor.background = Color.grey(0.9);
 						groupNameEditor.string = selectedLabel.asString;
 						groupNameEditor.font = labelFont;
