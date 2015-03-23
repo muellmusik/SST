@@ -448,7 +448,6 @@ SSTGUI {
 		scrollView = ScrollView(window, Rect(0, 0, width - 8, 334));
 		scrollView.hasBorder = true;
 		scrollView.resize = 2;
-		scrollView.background = Color.clear;
 		scrollView.hasVerticalScroller = false;
 		scrollView.canFocus_(false);
 		
