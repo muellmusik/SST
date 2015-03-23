@@ -18,25 +18,25 @@ SST {
 	var <sections;
 
 	*new {|clock| ^super.new.init(clock); }
-	
-	init {|argclock| 
-		clock = argclock ? TempoClock.default; 
-		items = SortedList(128, {|a, b| 
-			a.time < b.time || (a.time == b.time && { a.group.order < b.group.order }) 
+
+	init {|argclock|
+		clock = argclock ? TempoClock.default;
+		items = SortedList(128, {|a, b|
+			a.time < b.time || (a.time == b.time && { a.group.order < b.group.order })
 		});
 		groupOrder = List.new;
 		groups = IdentityDictionary.new;
 		this.createGroup('Ungrouped', []);
 		sections = SortedList(8, {|a, b| a.time < b.time });
 	}
-	
-	addItem {|item| 
+
+	addItem {|item|
 		groups['Ungrouped'].addItem(item);
 		items.add(item);
 		item.sst = this;
 		this.changed(\items);
 	}
-	
+
 	// we schedule one event at a time, that way we can ignore a scheduled event if its time has changed
 	// calling this while already playing will rebuild the queue and jump to the new time
 	play {|startTime = 0| // startTime is relative to the event list
@@ -56,20 +56,20 @@ SST {
 			playing = true;
 		});
 	}
-	
+
 	pause { pauseTime = this.currentTime; playing = false; queue = nil; }
-	
+
 	togglePlay { if(playing, { this.pause }, { this.play(pauseTime) }); }
-	
+
 	stop { playing = false; queue = nil; pauseTime = 0; this.changed(\time, 0) }
-	
+
 	startTimeUpdate {
-		clock.sched(0, { 
+		clock.sched(0, {
 			this.changed(\time, this.currentTime);
 			if(playing, timeUpdate, nil);
 		})
 	}
-	
+
 	nextEvent {|eventsQueue|
 		var lastTime, thisQueue = queue, thisItem;
 		// test that the queue hasn't been edited
@@ -79,9 +79,9 @@ SST {
 			thisItem.value;
 			this.changed(\itemFired, thisItem);
 			lastTime = nextTime;
-			if(queue.notEmpty, { 
-				clock.sched((nextTime = queue.topPriority) - lastTime, 
-					{this.nextEvent(thisQueue)}); 
+			if(queue.notEmpty, {
+				clock.sched((nextTime = queue.topPriority) - lastTime,
+					{this.nextEvent(thisQueue)});
 			}, {playing = false});
 		});
 	}
@@ -89,22 +89,22 @@ SST {
 	itemAtTime {|time|
 		^items.detect({|item| item.time == time});
 	}
-	
-	removeItem {|item| 
+
+	removeItem {|item|
 		items.remove(item);
 		item.group.removeItem(item);
 		if(playing, {this.play(clock.beats - clockStart)}); // this will rebuild the queue
 		this.changed(\items);
 	}
-	
+
 	moveItem {|time, item|
 		item.time = time;
 		items.sort;
 		if(playing, {this.play(clock.beats - clockStart)}); // this will rebuild the queue
 		this.changed(\itemTimes);
 	}
-	
-	shiftItemsLater {|time, firstItem| 
+
+	shiftItemsLater {|time, firstItem|
 		var shiftAmount, ind, item;
 		time = max(time, 0);
 		shiftAmount = time - firstItem.time;
@@ -114,30 +114,30 @@ SST {
 		if(playing, {this.play(clock.beats - clockStart)}); // this will rebuild the queue
 		this.changed(\itemTimes);
 	}
-	
+
 	//shiftItemsBefore {|lastItem, time| } // don't think we need this
-	
+
 	clear {}
-	
+
 	createGroup {|groupName, groupItems| // Symbol, Array;
 		var exists;
 		exists = groups[groupName];
-		if(exists.notNil, { 
+		if(exists.notNil, {
 			exists.items.do({|item| groups['Ungrouped'].addItem(item) });
 			exists.items = groupItems;
 		}, {
 			groupOrder.add(groupName); // if new add last
 		 	groups[groupName] = SSTGroup(groupName, groupItems, groupOrder.indexOf(groupName));
-		}); 
+		});
 		this.changed(\groupAdded, groupName);
 	} // very simple for now
-	
+
 	orderGroup {|groupName, index|
 		groupOrder.remove(groupName);
 		groupOrder.insert(index, groupName);
 		this.resetGroupOrders;
 	}
-	
+
 	renameGroup {|oldName, newName|
 		var group;
 		group = groups[oldName];
@@ -146,11 +146,11 @@ SST {
 		groupOrder[group.order] = newName;
 		this.changed(\groupRenamed, oldName, newName);
 	}
-	
+
 	resetGroupOrders {
 		groupOrder.do({|key, i| groups[key].order = i; });
 	}
-	
+
 	removeGroup {|groupName|
 		groups[groupName].items.do({|item| groups['Ungrouped'].addItem(item) });
 		groups[groupName] = nil;
@@ -158,19 +158,19 @@ SST {
 		this.resetGroupOrders;
 		this.changed(\groupRemoved, groupName);
 	}
-	
-	addSection {|time, name| sections.add((time: time, name: name)); this.changed(\sectionAdded); } 
-	
+
+	addSection {|time, name| sections.add((time: time, name: name)); this.changed(\sectionAdded); }
+
 	lastEventTime { ^if(items.size > 0, {items.last.time}, {0}); } // more meaningful than duration
-	
+
 	currentTime { ^if(playing, {clock.beats - clockStart + playOffset}, { pauseTime }) }
-	
+
 	currentTime_ {|time| if(playing, {this.play(time)}, { pauseTime = time }); this.changed(\time, time) }
-	
+
 	asRoutineCode {
 		var resultString, lastEventTime = 0;
 		var sectionsList, resources = false;
-		
+
 		SSTItemWrapper.startResourceCollect;
 		items.do({|wrapper|
 			var resourceString;
@@ -181,16 +181,16 @@ SST {
 			});
 		});
 		SSTItemWrapper.cleanUpResourceCollect;
-		
+
 		if(resources, {
 			resultString = "/////// Routine Generated from SuperSimpleTimeline\n\n// Resource code\n\n(\n" ++ resultString ++ ")\n\n";
 		});
-		
+
 		// now events
 		resultString = resultString ++ "// Event Code \n\n(\nRoutine({\n\n";
-		
+
 		sectionsList = sections.as(Array).reverse;
-		
+
 		items.do({|wrapper|
 			var wait, thisEventCode;
 			wait = wrapper.time - lastEventTime;
@@ -205,11 +205,11 @@ SST {
 			resultString = resultString ++ "\t" ++ thisEventCode ++ "\n";
 			lastEventTime = wrapper.time;
 		});
-		
+
 		resultString = resultString ++ "\n}).play;\n)"
 		^resultString;
 	}
-	
+
 	asDocument {
 		Document.new("SST -> Routine", this.asRoutineCode).syntaxColorize;
 	}
@@ -217,25 +217,25 @@ SST {
 
 SSTGroup {
 	var <>name, <items, <>order, <>color;
-	
-	*new {|name, items, order| 
+
+	*new {|name, items, order|
 		items = SortedList(items.size, {|a, b| a.time <= b.time}).addAll(items);
 		^super.newCopyArgs(name, items, order).init;
 	}
-	
+
 	init { items.do(_.group = this) }
-	
+
 	items_ {|newItems|
 		items = SortedList(newItems.size, {|a, b| a.time <= b.time}).addAll(newItems);
 		this.init
 	}
-	
+
 	addItem {|newItem| newItem.group = this; items.add(newItem) }
-	
+
 	removeItem {|itemToRemove| items.remove(itemToRemove) }
-	
+
 	sort { items.sort }
-	
+
 }
 
 // could contain text, a soundfile, whatever
@@ -245,59 +245,59 @@ SSTItemWrapper {
 	var <group;
 	var <>sst;
 	classvar <resources; // a collection of buffers, etc.
-	
+
 	*new {|time, wrapped| ^super.newCopyArgs(max(time, 0), wrapped); }
-	
+
 	*cleanUpResourceCollect { resources = nil }
-	
+
 	*startResourceCollect { resources = IdentityDictionary.new }
-	
+
 	time_ {|newTime| time = max(newTime, 0); group.sort;}
-	
+
 	group_ {|newGroup| group !? {|oldGroup| oldGroup.removeItem(this)}; group = newGroup }
-	
+
 	gui {|parent, origin, name| ^SSTItemWrapperGUI(this, parent, origin, name) }
-	
+
 	// initialisation code for things like buffers and defs
 	resourceCode { ^nil }
-	
+
 	// the code which causes the actual event
 	eventCode { ^(wrapped.asCompileString ++ ".value;") }
-	
+
 	//execute the event
 	value { wrapped.value }
-	
+
 	initFromArchive { }
-	
+
 }
 
 // text to be evaluated
 SSTTextWrapper : SSTItemWrapper {
 	var <text;
-	
+
 	// text must be properly escaped if you supply a String literal
 	*new {|time, text| ^super.new(time, nil).text_(text) }
-	
+
 	compileText { wrapped = text.compile }
-	
+
 	text_ {|newText| text = newText; this.compileText; }
-	
+
 	gui {|parent, origin, name| ^SSTTextWrapperGUI(this, parent, origin, name) }
-	
+
 	// the code which causes the actual event
 	eventCode { ^text }
-	
+
 	//execute the event
 	value { wrapped.value }
-	
+
 }
 
 // play a soundfile from a Buffer
 SSTEnvelopedBufferWrapper : SSTItemWrapper {
 	var <>eventCode, <env, defName, <id;
-	
+
 	*new {|time, buffer| ^super.new(time, buffer).init }
-	
+
 	init {
 		env = Env([1, 1], [wrapped.duration]);
 		id = (this.identityHash%(2.pow(16))).asInteger;
@@ -305,41 +305,41 @@ SSTEnvelopedBufferWrapper : SSTItemWrapper {
 		this.addDef;
 		eventCode = "Synth(" ++ defName.asCompileString ++ ", [out: 0, rate: 1, mul: 1], target: " ++ wrapped.server.asCompileString ++ ");";
 	}
-	
+
 	initFromArchive { wrapped = Buffer.read(wrapped.server, wrapped.path, action: { this.addDef}); }
-	
+
 	addDef {
 		SynthDef(defName, {|out, rate, mul|
 			var output;
 			output = PlayBufSendIndex.ar(wrapped.numChannels, wrapped, rate, indFreq: 30, id: id);
 			output = output * EnvGen.ar(env, timeScale: rate.reciprocal, levelScale: mul, doneAction: 2);
 			Out.ar(out, output);
-		}).add; 
+		}).add;
 	}
-	
+
 	env_{|newEnv| env = newEnv; this.addDef }
-	
+
 	gui {|parent, origin, name| ^SSTEnvelopedBufferWrapperGUI(this, parent, origin, name) }
-	
+
 	// initialisation code for things like buffers and defs
-	resourceCode { 
+	resourceCode {
 		var bufKey, resourceString = "";
 		// problem if multiple files with the same name
 		bufKey = ("sst_buf_" ++ wrapped.path.basename.splitext[0]).asSymbol;
-		
+
 		// only add buffers once
 		if(resources[bufKey].isNil, {
 			resources[bufKey] = wrapped;
-			resourceString = resourceString 
+			resourceString = resourceString
 				++ $~
 				++ bufKey
-				++ " = Buffer.read(" 
+				++ " = Buffer.read("
 				++ wrapped.server.asCompileString
 				++ ", "
 				++ wrapped.path.asCompileString
 				++ ");\n\n";
 		});
-		
+
 		// use PlayBuf here instead of PlayBufSendIndex
 		resourceString = resourceString ++
 			"SynthDef(%, {|out, rate, mul|
@@ -348,13 +348,13 @@ SSTEnvelopedBufferWrapper : SSTItemWrapper {
 	output = output * EnvGen.ar(%, timeScale: rate.reciprocal, levelScale: mul, doneAction: 2);
 	Out.ar(out, output);
 }).add;\n\n".format(defName.asCompileString, wrapped.numChannels, bufKey, env.asCompileString);
-		
+
 		^resourceString
 	}
-	
+
 	//execute the event
 	value { eventCode.interpret }
-	
+
 }
 
 SSTGUI {
@@ -373,18 +373,18 @@ SSTGUI {
 	var <eventGUIs;
 	var groups;
 	var width = 1008;
-	
+
 	*new {|sst, name, origin|
 		^super.new.init(sst, name ? "SuperSimpleTimeline").makeWindow(origin ? (200@200));
 	}
-	
+
 	*readSST {|path, origin|
 		var new;
 		new = super.new.init(SST.new, name ? "SuperSimpleTimeline").makeWindow(origin ? (200@200)); // a bit ugly
 		{new.readSST(path)}.defer(0.1);
 		^new;
 	}
-	
+
 	init {|argSST, argName|
 		var hexColours;
 		sst = argSST;
@@ -416,7 +416,7 @@ SSTGUI {
 		});
 		eventGUIs = IdentityDictionary.new;
 	}
-	
+
 	groupColours_ { |coloursArray|
 		colorStream = Pseq(coloursArray, inf).asStream;
 		sst.groupOrder.do({|grpname|
@@ -424,7 +424,7 @@ SSTGUI {
 		});
 		eventsView.refresh;
 	}
-	
+
 	groupColoursFromHex_ {|hexArray|
 		colorStream = Pseq(hexArray.collect({|hex| Color.fromHexString(hex);}), inf).asStream;
 		sst.groupOrder.do({|grpname|
@@ -432,37 +432,37 @@ SSTGUI {
 		});
 		eventsView.refresh;
 	}
-	
+
 	makeWindow { |origin|
-		
+
 		durInv =  max(sst.lastEventTime, 1).reciprocal;
-		
+
 		window = Window.new(name, Rect(origin.x, origin.y, width, 400), false);
 		window.view.decorator = FlowLayout(window.view.bounds);
-		
+
 		window.view.keyDownAction = { arg view,char,modifiers,unicode,keycode;
 			if(unicode == 32, {sst.togglePlay});
 			if(unicode == 13, {sst.stop});
 		};
-		
+
 		scrollView = ScrollView(window, Rect(0, 0, width - 8, 334));
 		scrollView.hasBorder = true;
 		scrollView.resize = 2;
 		scrollView.hasVerticalScroller = false;
 		scrollView.canFocus_(false);
-		
+
 		backView = CompositeView(scrollView, Rect(0, 20,  width - 10, 294)).background_(Color.clear);
-		
+
 		this.makeTimesView;
-		
+
 		window.onClose = {
 			dependees.do({|dee| dee.removeDependant(this)});
-			onClose.value(this);	
+			onClose.value(this);
 		};
-		
+
 		window.view.decorator.shift(0, 5);
 		StaticText(window, Rect(0, 0, 5, 10)).string_("-").font_(Font("Helvetica-Bold", 12));
-		zoomSlider = Slider(window, Rect(0, 5, 100, 10)).action_({|view| 
+		zoomSlider = Slider(window, Rect(0, 5, 100, 10)).action_({|view|
 			var pixelsPerSecond, newWidth;
 			// pixels per second from whole sequence to 1 second
 			pixelsPerSecond = [(scrollView.bounds.width - 4) * durInv, (scrollView.bounds.width - 4), \cos].asSpec.map(view.value);
@@ -506,11 +506,11 @@ SSTGUI {
 		window.view.decorator.shift(0, -5);
 
 		window.front;
-		
+
 		this.makeEventsView;
-		
+
 		timePerPixel = max(sst.lastEventTime, 1) / eventsView.bounds.width;
-		
+
 		window.view.decorator.nextLine.nextLine;
 		window.view.decorator.shift(10, 0);
 		refTime = StaticText(window, Rect(0, 0, 220, 25))
@@ -519,29 +519,29 @@ SSTGUI {
 		//time = BMTimeReferences.currentTime(ca.timeReference);
 		time = sst.currentTime;
 		cursorLoc = time * durInv * cursorView.bounds.width;
-		
+
 		refTime.string_("Time:" + time.asTimeString);
-					
+
 		window.view.decorator.shift(0, 4);
-		
+
 	//	curSSTime = SCStaticText(window, Rect(0, 0, 300, 20))
 //			.string_("Selected Snapshot Time:") // initialise
 //			.font_(Font("Helvetica-Bold", 12));
-//		
+//
 //		if(activeSnapshot.notNil, {
 //			curSSTime.string_("Selected Snapshot Time:" + activeSnapshot.time.asTimeString);
 //		});
 
 		//zoomSlider.doAction; // hack to make eventsView take mouseDown initially
 	}
-	
+
 	makeTimesView {
-		
+
 		timesView.notNil.if({timesView.remove});
 		timesView = UserView(scrollView, Rect(0, 0, backView.bounds.width, 20));
 		timesView.background = Color.clear;
 		timesView.canFocus_(false);
-		
+
 		timesView.drawFunc = {
 			var oneSec, tenSecs, thirtySecs, bounds, halfHeight;
 			bounds = timesView.bounds;
@@ -549,7 +549,7 @@ SSTGUI {
 			Pen.addRect(Rect(0, 0, bounds.width, 20));
 			Pen.fillColor = Color.black.alpha_(0.6);
 			Pen.fill;
-			
+
 			// ticks
 			halfHeight = bounds.height * 0.5;
 			DrawGrid(bounds.copy.height_(halfHeight).top_(halfHeight), [0, max(sst.lastEventTime, 1), 'lin', 1.0].asSpec.grid, BlankGridLines()).fontColor_(Color.clear).gridColors_(Color.grey(0.7) ! 2).draw;
@@ -576,9 +576,9 @@ SSTGUI {
 			(sst.lastEventTime / 10).floor.do({|i|
 				((i + 1) * 10).asTimeString(1).drawLeftJustIn(
 					Rect((i+1) * tenSecs + 2, 0, 70, 20),
-					Font("Helvetica-Bold", 11), 
+					Font("Helvetica-Bold", 11),
 					Color.grey(0.8)
-				); 
+				);
 			});
 //			if(thirtySecs >= scrollView.bounds.width, {
 //				oneSec = timesView.bounds.width * durInv;
@@ -598,7 +598,7 @@ SSTGUI {
 			Pen.line(0@20, bounds.width@20);
 			Pen.stroke;
 			Pen.lineDash_(FloatArray[1.0, 0.0]);
-			
+
 			// draw section labels
 			Pen.strokeColor = Color.grey;
 			Pen.width = 1;
@@ -615,13 +615,13 @@ SSTGUI {
 				Pen.stringInRect(sectName, thisSectionLabelBounds, labelFont, Color.grey(0.3));
 			});
 		};
-		
+
 		timesView.mouseUpAction = {
 			selectedSectionLabelRect = nil;
 			selectedSectionLabel = nil;
 			refTime.string_("Time:" + sst.currentTime.asTimeString);
 		};
-		
+
 		timesView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
 			// if that fails try for a label
 			sectionLabelBounds.keysValuesDo({|section, rect|
@@ -629,7 +629,7 @@ SSTGUI {
 					selectedSectionLabelRect = rect; selectedSectionLabel = section;
 				})
 			});
-			
+
 			// single (maybe drag) or double (open event gui) click
 			if(clickCount < 2, {
 				selectedSectionLabelRect.notNil.if({
@@ -654,7 +654,7 @@ SSTGUI {
 						if(unicode == 13, {
 							var newName, index, oldGroup;
 							newName = view.string;
-							if(view.string.size > 0 
+							if(view.string.size > 0
 								&& { sst.sections.detect({|item| item.name == newName}).isNil }, {
 								thisLabel.name = newName;
 								timesView.refresh;
@@ -666,9 +666,9 @@ SSTGUI {
 					};
 				});
 			});
-			  
+
 		};
-		timesView.mouseMoveAction = {|view, x, y| 
+		timesView.mouseMoveAction = {|view, x, y|
 			var time;
 			var visRange, newX, lastX, maxX;
 			selectedSectionLabelRect.notNil.if({
@@ -679,11 +679,11 @@ SSTGUI {
 				visRange = Range(scrollView.visibleOrigin.x, scrollView.bounds.width);
 				newX = (x - visRange.start - selectXOffset) + selectedStartX; // could be more than lastX
 				time = newX * timePerPixel;
-				
+
 				selectedSectionLabel.time = min(time, sst.lastEventTime);
-				
+
 				refTime.string_("Selected Time:" + selectedSectionLabel.time.asTimeString);
-				
+
 				// now check if we can see newX and scroll if needed
 				if(visRange.start > newX, {
 					scrollView.visibleOrigin = newX@scrollView.visibleOrigin.y;
@@ -691,7 +691,7 @@ SSTGUI {
 				if(visRange.end < newX, {
 					scrollView.visibleOrigin = (newX - scrollView.bounds.width + 25)@scrollView.visibleOrigin.y;
 				});
-				
+
 				timesView.refresh;
 				cursorView.refresh;
 			}, {
@@ -700,25 +700,25 @@ SSTGUI {
 			});
 		};
 	}
-	
+
 	makeEventsView {
 		cursorView.notNil.if({cursorView.remove});
 		eventsView.notNil.if({eventsView.remove});
-		
+
 		scrollView.action = { eventsView.refresh }; // for now. Could but labels in a separate lower view
-		
+
 		cursorView = UserView(backView, Rect(0, 0, backView.bounds.width, backView.bounds.height))
 			.canFocus_(false)
 			.background_(Color.clear);
-			
+
 		eventsView = UserView(backView, Rect(0, 0, backView.bounds.width, backView.bounds.height))
 			.canFocus_(false)
 			.background_(Color.clear);
-			
+
 		cursorView.drawFunc = {
 			// draw grid
 			DrawGrid(eventsView.bounds, [0, max(sst.lastEventTime, 1), 'lin', 1.0].asSpec.grid, BlankGridLines()).draw;
-			
+
 			// draw section markers
 			Pen.strokeColor = Color.grey;
 			Pen.width = 1;
@@ -730,13 +730,13 @@ SSTGUI {
 				Pen.line(x@0, x@(eventsView.bounds.height - 15));
 				Pen.stroke;
 			});
-			
+
 			// draw time cursor
 			Pen.strokeColor = Color.grey;
 			Pen.width = 2;
 			Pen.line(cursorLoc@0, cursorLoc@eventsView.bounds.height);
 			Pen.stroke;
-			
+
 			// draw fired rings
 			firedItems.copy.keysValuesDo({|firedItem, itemSpecs|
 				var x, rect, alpha;
@@ -749,9 +749,9 @@ SSTGUI {
 				Pen.fillOval(rect);
 				//Pen.strokeOval(rect);
 			});
-				
+
 		};
-			
+
 		eventsView.drawFunc = {
 			var stringX = scrollView.visibleOrigin.x + 4;
 			groupDraggedTo = nil;
@@ -759,7 +759,7 @@ SSTGUI {
 			//Pen.fillColor = Color.grey;
 			sst.groupOrder.do({|name, i|
 				var groupY, labelPoint, label, thisLabelBounds;
-				
+
 				// draw labels
 				if(groupLabelDragName == name, {
 					label = (i + 1).asString ++ ". " ++ name.asString;
@@ -776,9 +776,9 @@ SSTGUI {
 					groupDraggedTo = name;
 				});
 				Pen.stringAtPoint(label, labelPoint, labelFont, Color.grey(0.3));
-				
+
 				groupY = thisLabelBounds.top + 25; // y for the events, not the labels
-				
+
 				// draw brackets
 				if(name != 'Ungrouped' && (sst.groups[name].items.size.postln > 0), {
 					var openX, closeX, brakSize;
@@ -788,8 +788,8 @@ SSTGUI {
 					Pen.stringAtPoint("[", openX@(groupY - (brakSize.height * 0.5)), brakFont, Color.grey(0.6));
 					Pen.stringAtPoint("]", closeX@(groupY - (brakSize.height * 0.5)), brakFont, Color.grey(0.6));
 				});
-				
-				
+
+
 				// draw events
 				Pen.fillColor = groups[name].color;
 				sst.groups[name].items.reverseDo({|item| // draw earlier items on top
@@ -828,16 +828,16 @@ SSTGUI {
 					visRange = Range(scrollView.visibleOrigin.x, scrollView.bounds.width);
 					newX = (x - visRange.start - selectXOffset) + selectedStartX; // could be more than lastX
 					time = newX * timePerPixel;
-					
+
 					// move or shift
 					if(modifiers.isShift, {
 						sst.shiftItemsLater(time, selectedItem);
 					}, {
 						sst.moveItem(time, selectedItem);
 					});
-					
+
 					refTime.string_("Selected Time:" + time.asTimeString);
-					
+
 					// now check if we can see newX and scroll if needed
 					if(visRange.start > newX, {
 						scrollView.visibleOrigin = newX@scrollView.visibleOrigin.y;
@@ -845,7 +845,7 @@ SSTGUI {
 					if(visRange.end < newX, {
 						scrollView.visibleOrigin = (newX - scrollView.bounds.width + 25)@scrollView.visibleOrigin.y;
 					});
-					
+
 					if(modifiers.isShift, { timesView.refresh; cursorView.refresh; });
 				});
 			}, {
@@ -856,9 +856,9 @@ SSTGUI {
 				});
 			});
 		};
-		
+
 		eventsView.mouseUpAction = {|view|
-			inMove = false; 
+			inMove = false;
 			if(groupDragItem.notNil, {
 				if(groupDraggedTo.notNil, { sst.groups[groupDraggedTo].addItem(groupDragItem); });
 				groupDragItem = nil;
@@ -879,16 +879,16 @@ SSTGUI {
 		};
 
 		eventsView.mouseDownAction = {|view, x, y, modifiers, buttonNumber, clickCount|
-			selectedLabel = nil; 
+			selectedLabel = nil;
 			selectedLabelRect = nil;
-			
+
 			// find selected event
 			selectedRect = nil;
 			selectedItem = nil;
 			itemRects.keysValuesDo({|item, rect|
 				if(rect.contains((x@y)), {selectedRect = rect; selectedItem = item;})
 			});
-			
+
 			// if that fails try for a label
 			if(selectedRect.isNil, {
 				labelBounds.keysValuesDo({|name, rect|
@@ -897,20 +897,20 @@ SSTGUI {
 					})
 				});
 			});
-			
-			
+
+
 			if(clickCount < 2, {
 				// singleClick, could be item-toGroup or label drag
 				selectedRect.notNil.if({
 					// we're dragging an event
-					
+
 					refTime.string_("Selected Time:" + selectedItem.time.asTimeString);
 					visOriginOnSelected = scrollView.visibleOrigin;
 					selectXOffset = x - visOriginOnSelected.x;
 					selectedStartX = durInv * selectedItem.time * eventsView.bounds.width;
 					if(modifiers.isCtrl, {
 						// we're dragging an event to a group
-						groupDragStartX = x; 
+						groupDragStartX = x;
 						groupDragStartY = y;
 						groupDragItem = selectedItem;
 						groupDragRect = selectedRect;
@@ -928,13 +928,13 @@ SSTGUI {
 				selectedItem.notNil.if({
 					// pop open item editor
 					var thisGUI, thisItem;
-					thisGUI = eventGUIs[selectedItem]; 
-					if(thisGUI.notNil, { thisGUI.front }, { 
+					thisGUI = eventGUIs[selectedItem];
+					if(thisGUI.notNil, { thisGUI.front }, {
 						thisItem = selectedItem;
 						eventGUIs[thisItem] = thisGUI = thisItem.gui;
 						thisGUI.notNil.if({
 							sst.addDependant(thisGUI);
-							thisGUI.onClose = { 
+							thisGUI.onClose = {
 								eventGUIs[thisItem] = nil;
 								sst.removeDependant(thisGUI);
 							};
@@ -966,7 +966,7 @@ SSTGUI {
 						// make a new event
 						var newEventTime, newEvent, thisLabelDist;
 						var closestLabelDist = inf, newEventLabel;
-						
+
 						newEventTime = x * timePerPixel;
 						sst.addItem(newEvent = SSTTextWrapper(newEventTime, ""));
 						labelBounds.keysValuesDo({|name, bounds|
@@ -979,24 +979,24 @@ SSTGUI {
 						sst.groups[newEventLabel].addItem(newEvent);
 						{ newEvent.gui }.defer(0.1);
 					});
-				
+
 				});
 			});
 		};
 	}
-	
+
 	// this finds the new index for a dragged group label
 	indexOfDraggedLabelBounds {|draggedBounds|
 		^labelBounds.values.asArray.sort({|a, b| a.top < b.top }).indexOfEqual(draggedBounds);
 	}
-	
+
 	recalcZoom {
 		// don't fire action, just get it in the right place
 		zoomSlider.value = [(scrollView.bounds.width - 4) * durInv, (scrollView.bounds.width - 4), \cos]
 			.asSpec
 			.unmap(timePerPixel.reciprocal);
 	}
-	
+
 	resizeInternalViewsIfNeeded {
 		var lastX;
 		lastX = sst.lastEventTime * durInv * eventsView.bounds.width;
@@ -1008,16 +1008,16 @@ SSTGUI {
 			backView.bounds = backView.bounds.width_(lastX);
 			eventsView.bounds = eventsView.bounds.width_(lastX);
 			cursorView.bounds = eventsView.bounds.width_(lastX);
-			backView.bounds = backView.bounds.width_(lastX); 
+			backView.bounds = backView.bounds.width_(lastX);
 			timesView.bounds = timesView.bounds.width_(lastX);
 			durInv =  max(sst.lastEventTime, 1).reciprocal;
 			timePerPixel = max(sst.lastEventTime, 1) / eventsView.bounds.width;
 			timesView.refresh;
 			cursorView.refresh;
 			this.recalcZoom;
-		});	
+		});
 	}
-		
+
 	writeSST {|path|
 		var archiveDict;
 		archiveDict = IdentityDictionary.new;
@@ -1041,20 +1041,20 @@ SSTGUI {
 		this.resizeInternalViewsIfNeeded;
 		{zoomSlider.valueAction = archiveDict[\zoom] ? 0.0 }.defer(0.01);
 	}
-		
+
 	update { arg changed, what ...args;
-				
+
 		switch(what,
-			\itemTimes, { 
+			\itemTimes, {
 				this.resizeInternalViewsIfNeeded;
 				{eventsView.refresh; cursorView.refresh;}.defer;
 			},
-			
+
 			\items, {
 				this.resizeInternalViewsIfNeeded;
 				{eventsView.refresh; cursorView.refresh;}.defer;
 			},
-			
+
 			\time, {
 				{
 					time = args[0];
@@ -1062,12 +1062,12 @@ SSTGUI {
 					cursorLoc = time * durInv * eventsView.bounds.width;
 					// scroll to see cursor
 //					if(args[1] != 0, { // not paused or stopped
-						if(cursorLoc > (scrollView.visibleOrigin.x + 
+						if(cursorLoc > (scrollView.visibleOrigin.x +
 								scrollView.bounds.width - 2), {
 							scrollView.visibleOrigin = cursorLoc@0;
 						}, {
 							if(cursorLoc < scrollView.visibleOrigin.x, {
-								scrollView.visibleOrigin = 
+								scrollView.visibleOrigin =
 									(cursorLoc - scrollView.bounds.width - 2)@0;
 							});
 						});
@@ -1075,7 +1075,7 @@ SSTGUI {
 					cursorView.refresh;
 				}.defer;
 			},
-			
+
 			\itemFired, {
 				var itemFired, firedTime, interval;
 				itemFired = args[0];
@@ -1093,29 +1093,29 @@ SSTGUI {
 					firedItems[itemFired] = nil;
 				}.fork(AppClock);
 			},
-			
+
 			\groupAdded, {
 				groups[args[0]].color = colorStream.next;
 				eventsView.refresh;
 			},
-			
+
 			\groupRemoved, {
 				labelBounds[args[0]] = nil;
 				eventsView.refresh;
 			},
-			
+
 			\groupRenamed, {
 				labelBounds[args[0]] = nil;
 				eventsView.refresh;
 			},
-			
+
 			\sectionAdded, {
 				cursorView.refresh;
 				timesView.refresh;
 			}
-			
+
 		);
-		
+
 //			\stop, {
 //				{sfView.timeCursorPosition = 0;}.defer;
 //			},
@@ -1136,15 +1136,15 @@ SSTGUI {
 //					ca.sequences.do({|sq, i| sequenceLevels[sq] = (0.1 * (i + 1))%1.0});
 //					this.makeeventsView;
 //					zoomSlider.enabled = true;
-//					//zoomSlider.valueAction = 0; 
+//					//zoomSlider.valueAction = 0;
 //					zoomSlider.doAction;
 //					}.defer;
 //				}, {zoomSlider.value = 0; zoomSlider.enabled = false;});
-//				
+//
 //			}
 //
 //		)
-//	
+//
 	}
 }
 
