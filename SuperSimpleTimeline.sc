@@ -211,7 +211,7 @@ SST {
 	}
 
 	asDocument {
-		Document.new("SST -> Routine", this.asRoutineCode).syntaxColorize;
+		Document.new("SST -> Routine", this.asRoutineCode);
 	}
 }
 
