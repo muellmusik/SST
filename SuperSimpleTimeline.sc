@@ -513,7 +513,7 @@ SSTGUI {
 
 		window.view.decorator.nextLine.nextLine;
 		window.view.decorator.shift(10, 0);
-		refTime = StaticText(window, Rect(0, 0, 220, 25))
+		refTime = StaticText(window, Rect(0, 0, 320, 25))
 			.string_("Time:") // initialise
 			.font_(Font("Helvetica-Bold", 16));
 		//time = BMTimeReferences.currentTime(ca.timeReference);
